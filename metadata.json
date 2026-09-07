@@ -1,0 +1,6 @@
+{
+  "name": "Neuza Doces - E-commerce e Gestão de Vendas",
+  "description": "Plataforma completa de e-commerce e gestão de vendas para Neuza Doces, com vitrine de doces artesanais, carrinho, checkout com acréscimo fiscal de 7% e painel administrativo integrado.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
