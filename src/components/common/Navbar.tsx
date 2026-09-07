@@ -60,13 +60,16 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPath }) => {
           </nav>
 
           {/* Action buttons (Cart & Admin) */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2 sm:space-x-3">
             <button
+              id="header-admin-button"
               onClick={() => handleNav('/admin')}
-              className="hidden lg:inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg border border-blue-800/60 text-blue-200 hover:bg-blue-950/90 hover:text-amber-300 transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 sm:px-3 py-2 rounded-xl border border-amber-400/40 bg-blue-950/70 text-amber-300 hover:bg-blue-900/90 transition-colors shadow-xs active:scale-95"
+              title="Acessar Painel do Administrador"
             >
-              <ShieldCheck className="w-4 h-4 text-amber-400" />
-              Painel
+              <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
+              <span className="hidden sm:inline">Painel Admin</span>
+              <span className="sm:hidden">Admin</span>
             </button>
 
             {/* Cart button */}

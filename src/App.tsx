@@ -27,11 +27,12 @@ function AppContent() {
   const { path, navigate } = useRouter();
   const { isAuthenticated } = useStore();
 
-  const isAdminRoute = path.startsWith('/admin');
+  const cleanPath = path.length > 1 && path.endsWith('/') ? path.slice(0, -1) : path;
+  const isAdminRoute = cleanPath.startsWith('/admin');
 
   // Admin routing logic
   if (isAdminRoute) {
-    if (path === '/admin/login') {
+    if (cleanPath === '/admin/login') {
       if (isAuthenticated) {
         navigate('/admin');
         return null;
@@ -45,44 +46,58 @@ function AppContent() {
     }
 
     return (
-      <AdminLayout currentPath={path} onNavigate={navigate}>
-        {path === '/admin' && <AdminDashboardPage onNavigate={navigate} />}
-        {path === '/admin/produtos' && <AdminProductsPage onNavigate={navigate} />}
-        {path === '/admin/categorias' && <AdminCategoriesPage />}
-        {path === '/admin/pedidos' && <AdminOrdersPage />}
-        {path === '/admin/clientes' && <AdminCustomersPage />}
-        {path === '/admin/estoque' && <AdminStockPage />}
-        {path === '/admin/relatorios' && <AdminReportsPage />}
-        {path === '/admin/configuracoes' && <AdminSettingsPage />}
+      <AdminLayout currentPath={cleanPath} onNavigate={navigate}>
+        {(cleanPath === '/admin' || cleanPath === '/admin/dashboard') && (
+          <AdminDashboardPage onNavigate={navigate} />
+        )}
+        {cleanPath === '/admin/produtos' && <AdminProductsPage onNavigate={navigate} />}
+        {cleanPath === '/admin/categorias' && <AdminCategoriesPage />}
+        {cleanPath === '/admin/pedidos' && <AdminOrdersPage />}
+        {cleanPath === '/admin/clientes' && <AdminCustomersPage />}
+        {cleanPath === '/admin/estoque' && <AdminStockPage />}
+        {cleanPath === '/admin/relatorios' && <AdminReportsPage />}
+        {cleanPath === '/admin/configuracoes' && <AdminSettingsPage />}
+        {/* Fallback for other /admin paths */}
+        {![
+          '/admin',
+          '/admin/dashboard',
+          '/admin/produtos',
+          '/admin/categorias',
+          '/admin/pedidos',
+          '/admin/clientes',
+          '/admin/estoque',
+          '/admin/relatorios',
+          '/admin/configuracoes',
+        ].includes(cleanPath) && <AdminDashboardPage onNavigate={navigate} />}
       </AdminLayout>
     );
   }
 
   // Public Store routing logic
   return (
-    <StoreLayout currentPath={path} onNavigate={navigate}>
-      {path === '/' && <HomePage onNavigate={navigate} />}
+    <StoreLayout currentPath={cleanPath} onNavigate={navigate}>
+      {cleanPath === '/' && <HomePage onNavigate={navigate} />}
 
-      {path === '/produtos' && <ProductsPage onNavigate={navigate} />}
+      {cleanPath === '/produtos' && <ProductsPage onNavigate={navigate} />}
 
-      {path.startsWith('/categoria/') && (
+      {cleanPath.startsWith('/categoria/') && (
         <ProductsPage
-          key={path}
-          initialCategorySlug={path.replace('/categoria/', '')}
+          key={cleanPath}
+          initialCategorySlug={cleanPath.replace('/categoria/', '')}
           onNavigate={navigate}
         />
       )}
 
-      {path.startsWith('/produto/') && (
-        <ProductDetailPage slug={path.replace('/produto/', '')} onNavigate={navigate} />
+      {cleanPath.startsWith('/produto/') && (
+        <ProductDetailPage slug={cleanPath.replace('/produto/', '')} onNavigate={navigate} />
       )}
 
-      {path === '/carrinho' && <CartPage onNavigate={navigate} />}
+      {cleanPath === '/carrinho' && <CartPage onNavigate={navigate} />}
 
-      {path === '/checkout' && <CheckoutPage onNavigate={navigate} />}
+      {cleanPath === '/checkout' && <CheckoutPage onNavigate={navigate} />}
 
-      {path.startsWith('/pedido/') && (
-        <OrderSuccessPage orderId={path.replace('/pedido/', '')} onNavigate={navigate} />
+      {cleanPath.startsWith('/pedido/') && (
+        <OrderSuccessPage orderId={cleanPath.replace('/pedido/', '')} onNavigate={navigate} />
       )}
     </StoreLayout>
   );

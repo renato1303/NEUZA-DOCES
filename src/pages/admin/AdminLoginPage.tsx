@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Lock, Mail, ShieldCheck, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Lock, Mail, ShieldCheck, ArrowRight, CheckCircle2, AlertCircle, UserCheck } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
 
 interface AdminLoginPageProps {
@@ -7,13 +7,19 @@ interface AdminLoginPageProps {
 }
 
 export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onNavigate }) => {
-  const { login } = useStore();
+  const { login, isAuthenticated } = useStore();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('admin@neuzadoces.com.br');
+  const [password, setPassword] = useState('admin123');
   const [error, setError] = useState('');
   const [forgotModal, setForgotModal] = useState(false);
   const [forgotSent, setForgotSent] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      onNavigate('/admin');
+    }
+  }, [isAuthenticated, onNavigate]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,10 +38,10 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onNavigate }) =>
     }
   };
 
-  const handleQuickDemoLogin = () => {
-    setEmail('admin@neuzadoces.com.br');
+  const handleQuickLogin = (emailChoice: string) => {
+    setEmail(emailChoice);
     setPassword('admin123');
-    login('admin@neuzadoces.com.br', 'admin123');
+    login(emailChoice, 'admin123');
     onNavigate('/admin');
   };
 
@@ -67,9 +73,27 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onNavigate }) =>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-              E-mail Administrativo
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-semibold text-slate-300">
+                E-mail Administrativo
+              </label>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setEmail('admin@neuzadoces.com.br')}
+                  className="text-[10px] px-2 py-0.5 rounded-md bg-blue-950 text-blue-300 border border-blue-800 hover:bg-blue-900"
+                >
+                  admin
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEmail('renatoinacio2@gmail.com')}
+                  className="text-[10px] px-2 py-0.5 rounded-md bg-amber-950/60 text-amber-300 border border-amber-800/60 hover:bg-amber-900/60"
+                >
+                  renato
+                </button>
+              </div>
+            </div>
             <div className="relative">
               <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
@@ -113,7 +137,7 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onNavigate }) =>
           <button
             id="admin-login-submit"
             type="submit"
-            className="w-full py-3.5 rounded-xl bg-[#d6bd2d] hover:bg-[#c4ab25] text-[#091129] font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 active:scale-95"
+            className="w-full py-3.5 rounded-xl bg-[#d6bd2d] hover:bg-[#c4ab25] text-[#091129] font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
           >
             <span>Entrar no Painel</span>
             <ArrowRight className="w-4 h-4" />
@@ -122,18 +146,30 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onNavigate }) =>
 
         {/* Quick Demo Access */}
         <div className="pt-4 border-t border-slate-700/80 space-y-2 text-center">
-          <span className="text-[11px] text-slate-400 uppercase tracking-wider block">
-            Acesso de Demonstração
+          <span className="text-[11px] text-slate-400 uppercase tracking-wider block font-semibold">
+            Entrada Rápida com 1 Clique
           </span>
-          <button
-            type="button"
-            id="quick-demo-login-btn"
-            onClick={handleQuickDemoLogin}
-            className="w-full py-2.5 px-4 rounded-xl border border-blue-500/40 bg-blue-950/60 text-amber-300 hover:bg-blue-900/60 text-xs font-semibold transition-colors flex items-center justify-center gap-2"
-          >
-            <ShieldCheck className="w-4 h-4 text-amber-400" />
-            Entrar direto como Administrador
-          </button>
+          <div className="grid grid-cols-1 gap-2">
+            <button
+              type="button"
+              id="quick-demo-login-btn"
+              onClick={() => handleQuickLogin('admin@neuzadoces.com.br')}
+              className="w-full py-2.5 px-4 rounded-xl border border-blue-500/40 bg-blue-950/60 text-amber-300 hover:bg-blue-900/60 text-xs font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <ShieldCheck className="w-4 h-4 text-amber-400" />
+              Entrar como Administrador Geral
+            </button>
+
+            <button
+              type="button"
+              id="quick-renato-login-btn"
+              onClick={() => handleQuickLogin('renatoinacio2@gmail.com')}
+              className="w-full py-2.5 px-4 rounded-xl border border-amber-500/40 bg-amber-950/40 text-amber-200 hover:bg-amber-900/40 text-xs font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <UserCheck className="w-4 h-4 text-amber-400" />
+              Entrar como Renato Inácio
+            </button>
+          </div>
 
           <button
             onClick={() => onNavigate('/')}

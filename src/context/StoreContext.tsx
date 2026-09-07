@@ -30,6 +30,7 @@ interface StoreContextType {
   settings: StoreSettings;
   cart: CartItem[];
   currentUser: User | null;
+  isAuthenticated: boolean;
   notifications: AdminNotification[];
   
   // Product actions
@@ -596,25 +597,34 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   // Auth
-  const login = (email: string, password?: string) => {
-    // Demo admin credentials or any reasonable input
-    if (email.trim()) {
-      const user: User = {
-        id: 'usr-' + Date.now(),
-        name: email.toLowerCase().includes('admin') ? 'Neuza Inácio (Admin)' : 'Colaborador Neuza Doces',
-        email: email.trim(),
-        role: 'admin',
-        created_at: new Date().toISOString(),
-      };
-      setCurrentUser(user);
-      return { success: true };
+  const login = (email: string, _password?: string) => {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    if (!cleanEmail) {
+      return { success: false, message: 'Informe um e-mail válido para acessar.' };
     }
-    return { success: false, message: 'Informe um e-mail válido.' };
+
+    const userName = cleanEmail.includes('renato')
+      ? 'Renato Inácio (Admin)'
+      : cleanEmail.includes('admin')
+      ? 'Neuza Inácio (Admin)'
+      : 'Administrador';
+
+    const user: User = {
+      id: 'usr-' + Date.now(),
+      name: userName,
+      email: cleanEmail,
+      role: 'admin',
+      created_at: new Date().toISOString(),
+    };
+    setCurrentUser(user);
+    return { success: true };
   };
 
   const logout = () => {
     setCurrentUser(null);
   };
+
+  const isAuthenticated = Boolean(currentUser);
 
   // Reset to Demo Data
   const resetDemoData = () => {
@@ -644,6 +654,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         settings,
         cart,
         currentUser,
+        isAuthenticated,
         notifications,
         addProduct,
         updateProduct,
