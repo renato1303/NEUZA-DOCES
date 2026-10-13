@@ -15,12 +15,15 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
           {/* Col 1: Brand Info */}
           <div className="space-y-4">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-1.5">
               <img
                 src="/logo.png"
                 alt="Neuza Doces"
-                className="h-16 sm:h-20 w-auto object-contain drop-shadow-sm"
+                className="h-14 sm:h-18 w-auto object-contain drop-shadow-sm self-start"
               />
+              <span className="text-xs font-bold text-white tracking-wide">
+                distribuído por <span className="font-extrabold text-amber-300">IR Distribuidora</span>
+              </span>
             </div>
             <p className="text-sm text-slate-400 leading-relaxed">
               Doces artesanais produzidos com carinho e tradição brasileira. Sabores que resgatam

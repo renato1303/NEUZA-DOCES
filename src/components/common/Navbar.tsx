@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingBag, Menu, X, ShieldCheck } from 'lucide-react';
+import { ShoppingBag, Menu, X } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
 import { formatCurrency } from '../../utils/formatters';
 
@@ -18,25 +18,28 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPath }) => {
   ];
 
   const handleNav = (path: string) => {
-    onNavigate(path);
-    setMobileMenuOpen(false);
+    navigate(path);
   };
+  // @ts-ignore
+  const navigate = onNavigate;
 
   return (
-    <header className="sticky top-0 z-40 bg-[#091129] text-slate-100 shadow-md border-b border-blue-950/60">
-      {/* Main navigation bar */}
+    <header className="sticky top-0 z-40 bg-[#091129] border-b border-blue-950 shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-20 sm:h-24">
           {/* Brand Logo with removed background */}
           <button
             onClick={() => handleNav('/')}
-            className="flex items-center gap-3 text-left group focus:outline-hidden"
+            className="flex flex-col text-left group focus:outline-hidden py-1"
           >
             <img
               src="/logo.png"
               alt="Neuza Doces"
-              className="h-14 sm:h-16 w-auto object-contain py-1 group-hover:scale-105 transition-transform drop-shadow-sm"
+              className="h-12 sm:h-14 w-auto object-contain group-hover:scale-105 transition-transform drop-shadow-sm"
             />
+            <span className="text-[10px] sm:text-[11px] font-bold text-white tracking-wide mt-0.5">
+              distribuído por <span className="font-extrabold text-amber-300">IR Distribuidora</span>
+            </span>
           </button>
 
           {/* Desktop Nav Links */}
@@ -59,19 +62,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPath }) => {
             })}
           </nav>
 
-          {/* Action buttons (Cart & Admin) */}
+          {/* Action buttons (Cart only) */}
           <div className="flex items-center space-x-2 sm:space-x-3">
-            <button
-              id="header-admin-button"
-              onClick={() => handleNav('/admin')}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 sm:px-3 py-2 rounded-xl border border-amber-400/40 bg-blue-950/70 text-amber-300 hover:bg-blue-900/90 transition-colors shadow-xs active:scale-95"
-              title="Acessar Painel do Administrador"
-            >
-              <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
-              <span className="hidden sm:inline">Painel Admin</span>
-              <span className="sm:hidden">Admin</span>
-            </button>
-
             {/* Cart button */}
             <button
               id="header-cart-button"
@@ -116,15 +108,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPath }) => {
               {link.label}
             </button>
           ))}
-          <div className="pt-3 border-t border-blue-950 flex flex-col gap-2">
-            <button
-              onClick={() => handleNav('/admin')}
-              className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium text-amber-300 bg-blue-950/80 flex items-center justify-between"
-            >
-              <span>Painel Administrativo</span>
-              <ShieldCheck className="w-4 h-4 text-amber-400" />
-            </button>
-          </div>
         </div>
       )}
     </header>

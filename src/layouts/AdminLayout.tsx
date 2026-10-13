@@ -70,11 +70,11 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               <img src="/logo.png" alt="Neuza Doces" className="w-full h-full object-contain" />
             </div>
             <div>
-              <span className="font-serif text-lg font-bold text-white block">
+              <span className="font-serif text-base font-bold text-white block leading-tight">
                 Neuza Doces
               </span>
-              <span className="text-[10px] uppercase tracking-widest text-[#d6bd2d] font-bold block">
-                Painel Gestão
+              <span className="text-[10px] font-bold text-white block leading-tight mt-0.5">
+                distribuído por <span className="font-extrabold text-amber-300">IR Distribuidora</span>
               </span>
             </div>
           </div>
