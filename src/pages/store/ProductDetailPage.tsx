@@ -2,14 +2,12 @@ import React, { useState } from 'react';
 import {
   ArrowLeft,
   ShoppingBag,
-  Check,
   ShieldCheck,
   Truck,
   Sparkles,
   Package,
   Plus,
   Minus,
-  AlertCircle,
 } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
 import { SaleType } from '../../types';
@@ -30,7 +28,6 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ slug, onNa
   const [selectedFormat, setSelectedFormat] = useState<SaleType>('pote');
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState<string>('');
-  const [addedNotice, setAddedNotice] = useState(false);
 
   if (!product) {
     return (
@@ -63,14 +60,13 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ slug, onNa
   const handleAddToCart = () => {
     if (isOutOfStock) return;
     addToCart(product, selectedFormat, quantity);
-    setAddedNotice(true);
-    setTimeout(() => setAddedNotice(false), 2000);
+    onNavigate('/carrinho');
   };
 
   const handleBuyNow = () => {
     if (isOutOfStock) return;
     addToCart(product, selectedFormat, quantity);
-    onNavigate('/checkout');
+    onNavigate('/carrinho');
   };
 
   const relatedProducts = products
@@ -294,25 +290,10 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ slug, onNa
                 type="button"
                 disabled={isOutOfStock}
                 onClick={handleAddToCart}
-                className={`py-3.5 px-5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-xs active:scale-95 ${
-                  isOutOfStock
-                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                    : addedNotice
-                    ? 'bg-emerald-700 text-white shadow-emerald-700/30'
-                    : 'bg-emerald-50 border-2 border-emerald-600 text-emerald-800 hover:bg-emerald-100 hover:border-emerald-700'
-                }`}
+                className="py-3.5 px-5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-xs active:scale-95 bg-emerald-50 border-2 border-emerald-600 text-emerald-800 hover:bg-emerald-100 hover:border-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                {addedNotice ? (
-                  <>
-                    <Check className="w-4 h-4" />
-                    Adicionado ao Carrinho!
-                  </>
-                ) : (
-                  <>
-                    <ShoppingBag className="w-4 h-4" />
-                    Adicionar ao Carrinho
-                  </>
-                )}
+                <ShoppingBag className="w-4 h-4" />
+                <span>Adicionar ao Carrinho</span>
               </button>
 
               <button
@@ -331,7 +312,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ slug, onNa
           <div className="pt-6 border-t border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-slate-600">
             <div className="flex items-center gap-2.5">
               <ShieldCheck className="w-4 h-4 text-amber-500 shrink-0" />
-              <span>Opção de faturamento com Nota Fiscal (7%)</span>
+              <span>Garantia de qualidade e procedência</span>
             </div>
             <div className="flex items-center gap-2.5">
               <Truck className="w-4 h-4 text-amber-500 shrink-0" />

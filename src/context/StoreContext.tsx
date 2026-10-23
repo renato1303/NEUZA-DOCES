@@ -115,6 +115,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return existing
         ? {
             ...existing,
+            category_id: existing.category_id === 'cat-5' ? 'cat-1' : (existing.category_id || initialP.category_id),
             image_url: initialP.image_url,
             gallery: initialP.gallery,
           }
@@ -124,7 +125,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   });
   const [categories, setCategories] = useState<Category[]>(() => {
     const loaded = getStorage<Category[]>(STORAGE_KEYS.CATEGORIES, INITIAL_CATEGORIES);
-    const valid = loaded.filter(c => INITIAL_CATEGORIES.some(ic => ic.id === c.id));
+    const valid = loaded.filter(c => c.id !== 'cat-5' && c.slug !== 'geleias-frutas' && INITIAL_CATEGORIES.some(ic => ic.id === c.id));
     return valid.length > 0 ? valid : INITIAL_CATEGORIES;
   });
   const [customers, setCustomers] = useState<Customer[]>(() =>
@@ -336,16 +337,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       };
     });
 
-    // 3. Check shipping & invoice surcharge
-    const shipping =
-      subtotal >= settings.free_shipping_threshold ? 0 : settings.flat_shipping_fee;
-
-    const invoiceFeePct = settings.invoice_fee_percentage || 7;
-    const invoiceFeeAmount = orderData.has_invoice
-      ? Math.round(subtotal * (invoiceFeePct / 100) * 100) / 100
-      : 0;
-
-    const total = Math.round((subtotal + shipping + invoiceFeeAmount) * 100) / 100;
+    // 3. Shipping is NOT calculated by the system (freight is determined manually by the commercial team)
+    const shipping = 0;
+    const invoiceFeePct = 0;
+    const invoiceFeeAmount = 0;
+    const total = Math.round(subtotal * 100) / 100;
 
     // 4. Stock deduction rule:
     // When buying a box, decrement by (quantity * units_per_box) pots!

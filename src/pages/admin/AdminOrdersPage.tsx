@@ -359,7 +359,7 @@ export const AdminOrdersPage: React.FC = () => {
               <div className="flex justify-between">
                 <span>Frete</span>
                 <span className="font-semibold text-slate-900">
-                  {selectedOrder.shipping === 0 ? 'Grátis' : formatCurrency(selectedOrder.shipping)}
+                  {selectedOrder.shipping === 0 ? 'A calcular com o comercial' : formatCurrency(selectedOrder.shipping)}
                 </span>
               </div>
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingBag, Eye, Check } from 'lucide-react';
+import { ShoppingBag, Eye } from 'lucide-react';
 import { Product, SaleType } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 import { useStore } from '../../context/StoreContext';
@@ -12,7 +12,6 @@ interface ProductCardProps {
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onNavigate }) => {
   const { addToCart } = useStore();
   const [selectedFormat, setSelectedFormat] = useState<SaleType>('pote');
-  const [addedNotice, setAddedNotice] = useState(false);
 
   const isOutOfStock = product.stock <= 0;
 
@@ -20,8 +19,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onNavigate })
     e.stopPropagation();
     if (isOutOfStock) return;
     addToCart(product, selectedFormat, 1);
-    setAddedNotice(true);
-    setTimeout(() => setAddedNotice(false), 1800);
+    onNavigate('/carrinho');
   };
 
   const handleCardClick = () => {
@@ -117,22 +115,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onNavigate })
               className={`px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 shadow-sm ${
                 isOutOfStock
                   ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
-                  : addedNotice
-                  ? 'bg-emerald-700 text-white shadow-emerald-700/30'
                   : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20 hover:shadow-emerald-600/30'
               }`}
             >
-              {addedNotice ? (
-                <>
-                  <Check className="w-4 h-4" />
-                  <span>Adicionado!</span>
-                </>
-              ) : (
-                <>
-                  <ShoppingBag className="w-4 h-4" />
-                  <span>Comprar</span>
-                </>
-              )}
+              <ShoppingBag className="w-4 h-4" />
+              <span>Comprar</span>
             </button>
           </div>
         </div>

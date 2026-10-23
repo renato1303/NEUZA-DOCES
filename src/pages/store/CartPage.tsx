@@ -6,8 +6,6 @@ import {
   ArrowRight,
   ShoppingBag,
   ArrowLeft,
-  Truck,
-  ShieldCheck,
   Package,
 } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
@@ -27,10 +25,6 @@ export const CartPage: React.FC<CartPageProps> = ({ onNavigate }) => {
     cartTotalItems,
     settings,
   } = useStore();
-
-  const freeShippingThreshold = settings.free_shipping_threshold || 300;
-  const remainingForFreeShipping = Math.max(0, freeShippingThreshold - cartSubtotal);
-  const freeShippingProgress = Math.min(100, (cartSubtotal / freeShippingThreshold) * 100);
 
   if (cart.length === 0) {
     return (
@@ -75,27 +69,6 @@ export const CartPage: React.FC<CartPageProps> = ({ onNavigate }) => {
         >
           Esvaziar carrinho
         </button>
-      </div>
-
-      {/* Free Shipping Progress Bar */}
-      <div className="bg-blue-50/70 p-4 rounded-2xl border border-blue-200/80 space-y-2">
-        <div className="flex items-center justify-between text-xs font-semibold text-blue-950">
-          <div className="flex items-center gap-2">
-            <Truck className="w-4 h-4 text-blue-900" />
-            <span>
-              {remainingForFreeShipping > 0
-                ? `Faltam ${formatCurrency(remainingForFreeShipping)} para você ganhar Frete Grátis!`
-                : 'Parabéns! Você atingiu o valor para Frete Grátis!'}
-            </span>
-          </div>
-          <span>{Math.round(freeShippingProgress)}%</span>
-        </div>
-        <div className="w-full h-2.5 bg-blue-100 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-[#101e4a] transition-all duration-500 rounded-full"
-            style={{ width: `${freeShippingProgress}%` }}
-          />
-        </div>
       </div>
 
       {/* Cart Grid: Items list + Summary */}
@@ -217,33 +190,6 @@ export const CartPage: React.FC<CartPageProps> = ({ onNavigate }) => {
                 </span>
               </div>
 
-              <div className="flex justify-between items-center">
-                <span className="flex items-center gap-1">
-                  <span>Frete estimado</span>
-                  {remainingForFreeShipping <= 0 && (
-                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">
-                      GRÁTIS
-                    </span>
-                  )}
-                </span>
-                <span className="font-semibold text-slate-900">
-                  {remainingForFreeShipping <= 0
-                    ? 'Grátis'
-                    : formatCurrency(settings.flat_shipping_fee || 15)}
-                </span>
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 text-xs text-slate-500 bg-slate-50 p-3 rounded-xl space-y-1">
-                <div className="font-semibold text-slate-800 flex items-center gap-1">
-                  <ShieldCheck className="w-3.5 h-3.5 text-amber-500" />
-                  Nota Fiscal no Checkout
-                </div>
-                <p>
-                  Você poderá solicitar emissão de Nota Fiscal (acréscimo comercial de {settings.invoice_fee_percentage}%)
-                  na próxima etapa.
-                </p>
-              </div>
-
               <div className="pt-3 border-t border-slate-200 flex justify-between items-baseline">
                 <span className="text-base font-bold text-slate-900">Subtotal</span>
                 <span className="font-serif text-2xl font-bold text-blue-950">
@@ -262,7 +208,7 @@ export const CartPage: React.FC<CartPageProps> = ({ onNavigate }) => {
             </button>
 
             <div className="pt-2 text-center text-xs text-slate-400">
-              Pagamento 100% seguro via Pix ou Cartão
+              Atendimento direto da fábrica Neuza Doces
             </div>
           </div>
         </div>

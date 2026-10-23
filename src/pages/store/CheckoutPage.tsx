@@ -1,25 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
-  ShieldCheck,
-  Truck,
-  CreditCard,
-  QrCode,
-  Banknote,
   CheckCircle2,
   AlertCircle,
   ArrowLeft,
   Lock,
+  X,
+  Loader2,
+  Search,
+  Check,
+  MapPin,
 } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
 import { formatCurrency } from '../../utils/formatters';
-import { PaymentMethod } from '../../types';
+import { Order } from '../../types';
+
+const BRAZILIAN_STATES = [
+  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO',
+  'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI',
+  'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
+];
 
 interface CheckoutPageProps {
   onNavigate: (path: string) => void;
 }
 
 export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
-  const { cart, cartSubtotal, createOrder, settings } = useStore();
+  const { cart, cartSubtotal, createOrder } = useStore();
 
   // Customer form state
   const [customerName, setCustomerName] = useState('');
@@ -35,16 +41,86 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
   const [neighborhood, setNeighborhood] = useState('');
   const [city, setCity] = useState('');
   const [state, setState] = useState('SP');
+  const [isLoadingCep, setIsLoadingCep] = useState(false);
+  const [cepStatus, setCepStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [cepMessage, setCepMessage] = useState('');
 
-  // Commercial & NF rule state
-  // CRITICAL REQUIREMENT: Rule 7 & 14 - Option for Nota Fiscal with automatic 7% surcharge
-  const [hasInvoice, setHasInvoice] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('pix');
+  const numberInputRef = useRef<HTMLInputElement>(null);
+
+  const formatCep = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 8);
+    if (digits.length <= 5) return digits;
+    return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+  };
+
+  const fetchAddressByCep = async (rawCep: string) => {
+    const cleanCep = rawCep.replace(/\D/g, '');
+    if (cleanCep.length !== 8) return;
+
+    setIsLoadingCep(true);
+    setCepStatus('loading');
+    setCepMessage('Buscando endereço...');
+
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+      if (!response.ok) throw new Error('Falha ao consultar CEP');
+      const data = await response.json();
+
+      if (data.erro) {
+        setCepStatus('error');
+        setCepMessage('CEP não encontrado. Por favor, preencha o endereço manualmente.');
+        return;
+      }
+
+      if (data.logradouro) setStreet(data.logradouro);
+      if (data.bairro) setNeighborhood(data.bairro);
+      if (data.localidade) setCity(data.localidade);
+      if (data.uf) setState(data.uf);
+
+      setCepStatus('success');
+      setCepMessage('Endereço localizado! Informe agora o número e o complemento.');
+
+      // Automatically focus on the number input field so the user only needs to type number and complement
+      setTimeout(() => {
+        numberInputRef.current?.focus();
+      }, 100);
+    } catch {
+      setCepStatus('error');
+      setCepMessage('Não foi possível buscar o endereço automaticamente. Preencha manualmente.');
+    } finally {
+      setIsLoadingCep(false);
+    }
+  };
+
+  const handleZipCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatCep(e.target.value);
+    setZipCode(formatted);
+    const clean = formatted.replace(/\D/g, '');
+    if (clean.length === 8) {
+      fetchAddressByCep(clean);
+    } else {
+      setCepStatus('idle');
+      setCepMessage('');
+    }
+  };
+
+  const handleZipCodeBlur = () => {
+    const clean = zipCode.replace(/\D/g, '');
+    if (clean.length === 8 && cepStatus === 'idle') {
+      fetchAddressByCep(clean);
+    }
+  };
+
+  // Notes & Submission
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  if (cart.length === 0) {
+  // Commercial Team WhatsApp Modal
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+  const [completedOrder, setCompletedOrder] = useState<Order | null>(null);
+
+  if (cart.length === 0 && !completedOrder) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-20 text-center space-y-4">
         <h2 className="font-serif text-2xl font-bold text-slate-800">
@@ -63,32 +139,54 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
     );
   }
 
-  // Calculations
-  const shipping =
-    cartSubtotal >= (settings.free_shipping_threshold || 300)
-      ? 0
-      : settings.flat_shipping_fee || 15;
+  const orderTotal = cartSubtotal;
 
-  const invoiceFeePercentage = settings.invoice_fee_percentage || 7;
-  const invoiceFeeAmount = hasInvoice
-    ? Math.round(cartSubtotal * (invoiceFeePercentage / 100) * 100) / 100
-    : 0;
+  const buildWhatsAppUrl = (order: Order) => {
+    const itemsFormatted = order.items
+      .map(
+        (item) =>
+          `• ${item.quantity}x ${item.product_name} (${item.sale_type === 'caixa' ? 'Caixa' : 'Pote'}) - ${formatCurrency(
+            item.subtotal
+          )}`
+      )
+      .join('\n');
 
-  const orderTotal = Math.round((cartSubtotal + shipping + invoiceFeeAmount) * 100) / 100;
+    const complementText = order.address.complement ? ` - Compl: ${order.address.complement}` : '';
+    const docText =
+      order.customer.document && order.customer.document !== 'Não informado'
+        ? order.customer.document
+        : 'Não informado';
+    const notesText = order.notes && order.notes.trim() ? order.notes.trim() : 'Nenhuma';
 
-  const handleFillDemoData = () => {
-    setCustomerName('Confeitaria Sabor Mineiro LTDA');
-    setCustomerEmail('contato@sabormineiro.com.br');
-    setCustomerPhone('(19) 98765-4321');
-    setCustomerDocument('23.841.902/0001-55');
-    setZipCode('13010-000');
-    setStreet('Avenida Francisco Glicério');
-    setNumber('1240');
-    setComplement('Loja 02');
-    setNeighborhood('Centro');
-    setCity('Campinas');
-    setState('SP');
-    setHasInvoice(true);
+    const message = [
+      `🍬 *NOVO PEDIDO - NEUZA DOCES*`,
+      `*Pedido:* #${order.order_number}`,
+      ``,
+      `👤 *DADOS DO COMPRADOR / EMPRESA:*`,
+      `• *Nome/Razão Social:* ${order.customer.name}`,
+      `• *E-mail:* ${order.customer.email}`,
+      `• *WhatsApp/Telefone:* ${order.customer.phone}`,
+      `• *CPF/CNPJ:* ${docText}`,
+      ``,
+      `📍 *ENDEREÇO DE ENTREGA:*`,
+      `• *Logradouro:* ${order.address.street}, Nº ${order.address.number}${complementText}`,
+      `• *Bairro:* ${order.address.neighborhood || 'Centro'}`,
+      `• *Cidade/UF:* ${order.address.city}/${order.address.state}`,
+      `• *CEP:* ${order.address.zip_code}`,
+      ``,
+      `📝 *OBSERVAÇÃO:*`,
+      `${notesText}`,
+      ``,
+      `📦 *ITENS DO PEDIDO:*`,
+      `${itemsFormatted}`,
+      ``,
+      `💰 *VALOR TOTAL DO PEDIDO:* ${formatCurrency(order.total)}`,
+      `*(Frete a calcular com o nosso time comercial)*`,
+      ``,
+      `Olá! Acabei de fazer este pedido no site e gostaria de falar com o time comercial para calcular o frete e finalizar minha compra!`
+    ].join('\n');
+
+    return `https://wa.me/5515991576707?text=${encodeURIComponent(message)}`;
   };
 
   const handleSubmitOrder = (e: React.FormEvent) => {
@@ -97,11 +195,6 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
 
     if (!customerName.trim() || !customerEmail.trim() || !customerPhone.trim()) {
       setErrorMessage('Por favor, preencha todos os dados pessoais obrigatórios.');
-      return;
-    }
-
-    if (hasInvoice && !customerDocument.trim()) {
-      setErrorMessage('O preenchimento do CPF/CNPJ é obrigatório para emissão de Nota Fiscal.');
       return;
     }
 
@@ -134,13 +227,15 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
           sale_type: c.sale_type,
           quantity: c.quantity,
         })),
-        payment_method: paymentMethod,
-        has_invoice: hasInvoice,
+        payment_method: 'pix',
+        has_invoice: false,
         notes: notes.trim(),
       });
 
-      // Navigate to order confirmation
-      onNavigate(`/pedido/${order.id}`);
+      // Save order and pop up the commercial WhatsApp modal
+      setCompletedOrder(order);
+      setShowWhatsAppModal(true);
+      setIsSubmitting(false);
     } catch (err: any) {
       setErrorMessage(err.message || 'Erro ao processar o pedido. Tente novamente.');
       setIsSubmitting(false);
@@ -167,15 +262,6 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
             Ambiente seguro • Pedido registrado diretamente na fábrica Neuza Doces
           </p>
         </div>
-
-        {/* Demo filler button */}
-        <button
-          type="button"
-          onClick={handleFillDemoData}
-          className="text-xs px-3.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-900 font-semibold transition-colors border border-blue-200"
-        >
-          Preencher dados de exemplo (Teste rápido)
-        </button>
       </div>
 
       {errorMessage && (
@@ -247,8 +333,8 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
 
               <div className="sm:col-span-2">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
-                  <span>CPF ou CNPJ {hasInvoice && <strong className="text-blue-900">(Obrigatório para NF)</strong>}</span>
-                  <span className="text-[11px] text-slate-400 font-normal">Identificação fiscal</span>
+                  <span>CPF ou CNPJ (Opcional)</span>
+                  <span className="text-[11px] text-slate-400 font-normal">Identificação cadastral</span>
                 </label>
                 <input
                   id="checkout-doc-input"
@@ -256,9 +342,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
                   placeholder="000.000.000-00 ou 00.000.000/0000-00"
                   value={customerDocument}
                   onChange={(e) => setCustomerDocument(e.target.value)}
-                  className={`w-full px-3.5 py-2.5 rounded-xl border text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-hidden ${
-                    hasInvoice && !customerDocument ? 'border-amber-500 bg-amber-50/40' : 'border-slate-300'
-                  }`}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-hidden"
                 />
               </div>
             </div>
@@ -266,28 +350,73 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
 
           {/* Section 2: Endereço de Entrega */}
           <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
-            <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-              <span className="w-6 h-6 rounded-full bg-[#101e4a] text-white text-xs font-bold flex items-center justify-center">
-                2
-              </span>
-              <h2 className="font-serif text-lg font-bold text-slate-900">Endereço de Entrega</h2>
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-[#101e4a] text-white text-xs font-bold flex items-center justify-center">
+                  2
+                </span>
+                <h2 className="font-serif text-lg font-bold text-slate-900">Endereço de Entrega</h2>
+              </div>
+              <span className="text-[11px] text-slate-400 font-normal">Preenchimento automático via CEP</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">CEP</label>
-                <input
-                  type="text"
-                  placeholder="13000-000"
-                  value={zipCode}
-                  onChange={(e) => setZipCode(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-hidden"
-                />
+              {/* CEP Input with search state and feedback */}
+              <div className="sm:col-span-1">
+                <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                  <span>CEP *</span>
+                  {isLoadingCep ? (
+                    <span className="text-[11px] text-blue-900 font-semibold flex items-center gap-1">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Consultando...
+                    </span>
+                  ) : cepStatus === 'success' ? (
+                    <span className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
+                      <Check className="w-3 h-3" />
+                      Localizado!
+                    </span>
+                  ) : null}
+                </label>
+                <div className="relative">
+                  <input
+                    id="checkout-cep-input"
+                    type="text"
+                    required
+                    placeholder="00000-000"
+                    value={zipCode}
+                    onChange={handleZipCodeChange}
+                    onBlur={handleZipCodeBlur}
+                    maxLength={9}
+                    className={`w-full pl-3.5 pr-9 py-2.5 rounded-xl border text-sm outline-hidden transition-all ${
+                      cepStatus === 'success'
+                        ? 'border-emerald-500 bg-emerald-50/20 text-slate-900 focus:ring-2 focus:ring-emerald-500'
+                        : cepStatus === 'error'
+                        ? 'border-rose-400 bg-rose-50/20 text-slate-900 focus:ring-2 focus:ring-rose-500'
+                        : 'border-slate-300 text-slate-900 focus:ring-2 focus:ring-blue-500'
+                    }`}
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                    {isLoadingCep ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-blue-900" />
+                    ) : cepStatus === 'success' ? (
+                      <Check className="w-4 h-4 text-emerald-600 font-bold" />
+                    ) : (
+                      <Search className="w-4 h-4 text-slate-400" />
+                    )}
+                  </div>
+                </div>
               </div>
 
+              {/* Rua / Avenida */}
               <div className="sm:col-span-2">
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Rua / Avenida *</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                  <span>Rua / Logradouro *</span>
+                  {cepStatus === 'success' && (
+                    <span className="text-[11px] text-emerald-600 font-medium">Preenchido automaticamente</span>
+                  )}
+                </label>
                 <input
+                  id="checkout-street-input"
                   type="text"
                   required
                   placeholder="Ex: Rua das Palmeiras"
@@ -297,33 +426,65 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
                 />
               </div>
 
+              {/* Status Banner when CEP is loaded or failed */}
+              {cepMessage && (
+                <div
+                  className={`sm:col-span-3 text-xs flex items-center gap-2 px-3 py-2 rounded-xl transition-all ${
+                    cepStatus === 'success'
+                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                      : 'bg-amber-50 text-amber-800 border border-amber-200'
+                  }`}
+                >
+                  {cepStatus === 'success' ? (
+                    <Check className="w-4 h-4 shrink-0 text-emerald-600" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" />
+                  )}
+                  <span>{cepMessage}</span>
+                </div>
+              )}
+
+              {/* Número: Main focus target after CEP lookup */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Número *</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                  <span>Número *</span>
+                  <span className="text-[10px] text-amber-700 font-bold uppercase bg-amber-50 px-1.5 py-0.5 rounded">Adicionar</span>
+                </label>
                 <input
+                  ref={numberInputRef}
+                  id="checkout-number-input"
                   type="text"
                   required
-                  placeholder="123"
+                  placeholder="Ex: 123 ou S/N"
                   value={number}
                   onChange={(e) => setNumber(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-hidden"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-hidden font-medium"
                 />
               </div>
 
+              {/* Complemento: Main optional addition */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Complemento</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                  <span>Complemento</span>
+                  <span className="text-[10px] text-slate-400 font-normal">Opcional</span>
+                </label>
                 <input
+                  id="checkout-complement-input"
                   type="text"
-                  placeholder="Apto / Galpão / Sala"
+                  placeholder="Apto, Galpão, Sala..."
                   value={complement}
                   onChange={(e) => setComplement(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-hidden"
                 />
               </div>
 
+              {/* Bairro */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Bairro</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Bairro *</label>
                 <input
+                  id="checkout-neighborhood-input"
                   type="text"
+                  required
                   placeholder="Bairro"
                   value={neighborhood}
                   onChange={(e) => setNeighborhood(e.target.value)}
@@ -331,9 +492,11 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
                 />
               </div>
 
+              {/* Cidade */}
               <div className="sm:col-span-2">
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Cidade *</label>
                 <input
+                  id="checkout-city-input"
                   type="text"
                   required
                   placeholder="Cidade"
@@ -343,214 +506,37 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
                 />
               </div>
 
+              {/* Estado (UF) with all 27 Brazilian UFs */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Estado (UF) *</label>
                 <select
+                  id="checkout-state-select"
                   value={state}
                   onChange={(e) => setState(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-hidden bg-white"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-hidden bg-white font-medium"
                 >
-                  <option value="SP">SP</option>
-                  <option value="MG">MG</option>
-                  <option value="RJ">RJ</option>
-                  <option value="PR">PR</option>
-                  <option value="SC">SC</option>
-                  <option value="RS">RS</option>
-                  <option value="BA">BA</option>
-                  <option value="GO">GO</option>
-                  <option value="ES">ES</option>
-                  <option value="DF">DF</option>
+                  {BRAZILIAN_STATES.map((uf) => (
+                    <option key={uf} value={uf}>
+                      {uf}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
           </div>
 
-          {/* Section 3: REGRA FISCAL DE NOTA FISCAL */}
-          <div className="bg-blue-50/70 p-6 rounded-2xl border-2 border-blue-200/80 shadow-xs space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-blue-900" />
-                <h2 className="font-serif text-lg font-bold text-blue-950">
-                  Emissão de Nota Fiscal
-                </h2>
-              </div>
-              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300/80">
-                Regra Comercial (+{invoiceFeePercentage}%)
-              </span>
-            </div>
-
-            <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
-              Conforme a regra comercial e tributária da <strong>Neuza Doces</strong>, pedidos com
-              emissão de Nota Fiscal possuem um acréscimo de{' '}
-              <strong>{invoiceFeePercentage}%</strong> sobre o subtotal dos produtos.
-            </p>
-
-            {/* Option selector: Não / Sim */}
-            <div className="grid grid-cols-2 gap-3 pt-1">
-              <button
-                type="button"
-                id="invoice-option-no"
-                onClick={() => setHasInvoice(false)}
-                className={`py-3 px-4 rounded-xl border-2 font-semibold text-sm transition-all text-center flex items-center justify-center gap-2 ${
-                  !hasInvoice
-                    ? 'bg-white border-[#101e4a] text-[#091129] shadow-xs font-bold'
-                    : 'bg-white/50 border-slate-200 text-slate-600 hover:bg-white'
-                }`}
-              >
-                <span>Não preciso de NF</span>
-              </button>
-
-              <button
-                type="button"
-                id="invoice-option-yes"
-                onClick={() => setHasInvoice(true)}
-                className={`py-3 px-4 rounded-xl border-2 font-semibold text-sm transition-all text-center flex items-center justify-center gap-2 ${
-                  hasInvoice
-                    ? 'bg-[#101e4a] border-[#091129] text-white shadow-md font-bold'
-                    : 'bg-white/50 border-slate-200 text-slate-700 hover:bg-white'
-                }`}
-              >
-                <span>Sim, emitir NF (+{invoiceFeePercentage}%)</span>
-              </button>
-            </div>
-
-            {hasInvoice && (
-              <div className="p-3 bg-white/90 rounded-xl border border-blue-200 text-xs text-blue-950 space-y-1">
-                <div className="font-bold flex items-center gap-1">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  Nota Fiscal solicitada com sucesso!
-                </div>
-                <p>
-                  Acréscimo de {invoiceFeePercentage}%:{' '}
-                  <strong>{formatCurrency(invoiceFeeAmount)}</strong> calculado e somado ao total.
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Section 4: Forma de Pagamento */}
-          <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
-            <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-              <span className="w-6 h-6 rounded-full bg-[#101e4a] text-white text-xs font-bold flex items-center justify-center">
-                3
-              </span>
-              <h2 className="font-serif text-lg font-bold text-slate-900">Forma de Pagamento</h2>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <label
-                className={`p-3.5 rounded-xl border-2 cursor-pointer flex items-center gap-3 transition-all ${
-                  paymentMethod === 'pix'
-                    ? 'border-[#101e4a] bg-blue-50/50'
-                    : 'border-slate-200 hover:border-slate-300'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="payment"
-                  value="pix"
-                  checked={paymentMethod === 'pix'}
-                  onChange={() => setPaymentMethod('pix')}
-                  className="accent-[#101e4a]"
-                />
-                <QrCode className="w-5 h-5 text-emerald-600" />
-                <div>
-                  <span className="block text-xs font-bold text-slate-900">Pix Instantâneo</span>
-                  <span className="block text-[11px] text-slate-500">Aprovação imediata</span>
-                </div>
-              </label>
-
-              <label
-                className={`p-3.5 rounded-xl border-2 cursor-pointer flex items-center gap-3 transition-all ${
-                  paymentMethod === 'cartao_credito'
-                    ? 'border-[#101e4a] bg-blue-50/50'
-                    : 'border-slate-200 hover:border-slate-300'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="payment"
-                  value="cartao_credito"
-                  checked={paymentMethod === 'cartao_credito'}
-                  onChange={() => setPaymentMethod('cartao_credito')}
-                  className="accent-[#101e4a]"
-                />
-                <CreditCard className="w-5 h-5 text-blue-800" />
-                <div>
-                  <span className="block text-xs font-bold text-slate-900">Cartão de Crédito</span>
-                  <span className="block text-[11px] text-slate-500">Em até 6x sem juros</span>
-                </div>
-              </label>
-
-              <label
-                className={`p-3.5 rounded-xl border-2 cursor-pointer flex items-center gap-3 transition-all ${
-                  paymentMethod === 'cartao_debito'
-                    ? 'border-[#101e4a] bg-blue-50/50'
-                    : 'border-slate-200 hover:border-slate-300'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="payment"
-                  value="cartao_debito"
-                  checked={paymentMethod === 'cartao_debito'}
-                  onChange={() => setPaymentMethod('cartao_debito')}
-                  className="accent-[#101e4a]"
-                />
-                <CreditCard className="w-5 h-5 text-blue-600" />
-                <div>
-                  <span className="block text-xs font-bold text-slate-900">Cartão de Débito</span>
-                  <span className="block text-[11px] text-slate-500">Direto na entrega/online</span>
-                </div>
-              </label>
-
-              <label
-                className={`p-3.5 rounded-xl border-2 cursor-pointer flex items-center gap-3 transition-all ${
-                  paymentMethod === 'dinheiro'
-                    ? 'border-[#101e4a] bg-blue-50/50'
-                    : 'border-slate-200 hover:border-slate-300'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="payment"
-                  value="dinheiro"
-                  checked={paymentMethod === 'dinheiro'}
-                  onChange={() => setPaymentMethod('dinheiro')}
-                  className="accent-[#101e4a]"
-                />
-                <Banknote className="w-5 h-5 text-emerald-700" />
-                <div>
-                  <span className="block text-xs font-bold text-slate-900">Dinheiro na Entrega</span>
-                  <span className="block text-[11px] text-slate-500">Pagamento no recebimento</span>
-                </div>
-              </label>
-            </div>
-
-            {paymentMethod === 'pix' && (
-              <div className="p-3.5 bg-emerald-50/80 rounded-xl border border-emerald-200 text-xs text-emerald-950 flex items-start gap-2.5">
-                <QrCode className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
-                <div>
-                  <strong className="block font-bold text-emerald-900">QR Code Pix Instantâneo</strong>
-                  <span>
-                    Ao finalizar o pedido, o QR Code dinâmico será gerado na hora com o valor total exato dos seus produtos ({formatCurrency(orderTotal)}) e a opção Pix Copia e Cola para pagar pelo aplicativo do seu banco.
-                  </span>
-                </div>
-              </div>
-            )}
-
-            <div className="pt-2">
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Observações do Pedido (Opcional)
-              </label>
-              <textarea
-                rows={2}
-                placeholder="Ex: Instruções de entrega, referências ou horário preferencial..."
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 outline-hidden"
-              />
-            </div>
+          {/* Section 3: Observações do Pedido */}
+          <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+            <label className="block text-xs font-semibold text-slate-700">
+              Observações do Pedido (Opcional)
+            </label>
+            <textarea
+              rows={3}
+              placeholder="Ex: Instruções de entrega, referências ou horário preferencial..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 outline-hidden"
+            />
           </div>
         </div>
 
@@ -598,44 +584,18 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
             {/* Financial Calculations Breakdown */}
             <div className="pt-4 border-t border-slate-200 space-y-2.5 text-sm text-slate-600">
               <div className="flex justify-between">
-                <span>Subtotal</span>
+                <span>Subtotal dos Produtos</span>
                 <span className="font-semibold text-slate-900">
                   {formatCurrency(cartSubtotal)}
-                </span>
-              </div>
-
-              {/* Explicit NF surcharge line as requested in Section 7 */}
-              {hasInvoice && (
-                <div className="flex justify-between items-center text-blue-950 bg-blue-50 px-2.5 py-1.5 rounded-lg border border-blue-200">
-                  <span className="font-semibold flex items-center gap-1 text-xs">
-                    <ShieldCheck className="w-3.5 h-3.5 text-blue-900" />
-                    Acréscimo NF ({invoiceFeePercentage}%)
-                  </span>
-                  <span className="font-bold text-xs">
-                    +{formatCurrency(invoiceFeeAmount)}
-                  </span>
-                </div>
-              )}
-
-              <div className="flex justify-between items-center">
-                <span>Frete</span>
-                <span className="font-semibold text-slate-900">
-                  {shipping === 0 ? (
-                    <span className="text-emerald-700 font-bold">Grátis</span>
-                  ) : (
-                    formatCurrency(shipping)
-                  )}
                 </span>
               </div>
 
               <div className="pt-3 border-t border-slate-200 flex justify-between items-baseline">
                 <div>
                   <span className="block text-base font-bold text-slate-900">Valor Total</span>
-                  {hasInvoice && (
-                    <span className="text-[11px] text-blue-900 font-medium">
-                      (Com emissão fiscal inclusa)
-                    </span>
-                  )}
+                  <span className="text-[11px] text-slate-500 font-medium">
+                    (Frete a calcular com o atendente)
+                  </span>
                 </div>
                 <span className="font-serif text-3xl font-bold text-blue-950">
                   {formatCurrency(orderTotal)}
@@ -651,15 +611,112 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
               className="w-full py-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base shadow-lg shadow-emerald-600/25 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
             >
               <CheckCircle2 className="w-5 h-5 text-white" />
-              <span>{isSubmitting ? 'Registrando Pedido...' : 'Confirmar e Finalizar Pedido'}</span>
+              <span>{isSubmitting ? 'Confirmando...' : 'confirmar e calcular o frete'}</span>
             </button>
 
             <div className="pt-1 text-center text-xs text-slate-400">
-              Ao confirmar, seu pedido é processado e enviado para produção.
+              Ao confirmar, seu pedido é registrado e nossa equipe entrará em contato para o cálculo do frete.
             </div>
           </div>
         </div>
       </form>
+
+      {/* Pop-up Modal: Fale com nosso time comercial */}
+      {showWhatsAppModal && completedOrder && (
+        <div
+          id="commercial-whatsapp-modal"
+          className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 relative text-center space-y-6 animate-in fade-in zoom-in-95 duration-200 my-8">
+            {/* Close button */}
+            <button
+              onClick={() => {
+                setShowWhatsAppModal(false);
+                onNavigate(`/obrigado/${completedOrder.id}`);
+              }}
+              className="absolute top-4 right-4 p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+              title="Fechar e ir para a página de obrigado"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* WhatsApp Icon Circle */}
+            <div className="w-16 h-16 rounded-full bg-[#25D366]/15 text-[#25D366] flex items-center justify-center mx-auto shadow-inner">
+              <div className="w-12 h-12 rounded-full bg-[#25D366] text-white flex items-center justify-center shadow-md shadow-[#25D366]/40">
+                <svg className="w-7 h-7 fill-current" viewBox="0 0 24 24">
+                  <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+                </svg>
+              </div>
+            </div>
+
+            {/* Exact Required Message */}
+            <div className="space-y-3">
+              <h2 className="font-serif text-2xl sm:text-3xl font-bold text-slate-900 leading-tight">
+                Para finalizar a sua compra fale agora com nosso time comercial
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto">
+                Pedido <span className="font-bold text-slate-900">#{completedOrder.order_number}</span> gerado com sucesso. Clique no botão abaixo para abrir o WhatsApp e enviar os detalhes da compra e entrega diretamente para calcularmos o seu frete:
+              </p>
+            </div>
+
+            {/* WhatsApp Button Directed to 15991576707, then navigates to thank you page */}
+            <div>
+              <button
+                id="modal-whatsapp-button"
+                type="button"
+                onClick={() => {
+                  window.open(buildWhatsAppUrl(completedOrder), '_blank');
+                  setShowWhatsAppModal(false);
+                  onNavigate(`/obrigado/${completedOrder.id}`);
+                }}
+                className="w-full py-4 px-6 rounded-2xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-base sm:text-lg shadow-xl shadow-[#25D366]/35 flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
+              >
+                <svg className="w-6 h-6 fill-current shrink-0" viewBox="0 0 24 24">
+                  <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+                </svg>
+                <span>Falar no WhatsApp (15 99157-6707)</span>
+              </button>
+            </div>
+
+            {/* Quick Order Breakdown in Modal */}
+            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-left text-xs space-y-2 text-slate-600">
+              <div className="flex justify-between items-center pb-2 border-b border-slate-200">
+                <span className="font-semibold text-slate-700">Comprador:</span>
+                <span className="font-medium text-slate-900 truncate max-w-[220px]">{completedOrder.customer.name}</span>
+              </div>
+              <div className="flex justify-between items-center pb-2 border-b border-slate-200">
+                <span className="font-semibold text-slate-700">Destino:</span>
+                <span className="font-medium text-slate-900 truncate max-w-[220px]">
+                  {completedOrder.address.city}/{completedOrder.address.state} • CEP {completedOrder.address.zip_code}
+                </span>
+              </div>
+              <div className="flex justify-between items-center pb-2 border-b border-slate-200">
+                <span className="font-semibold text-slate-700">Total dos Produtos:</span>
+                <span className="font-bold text-slate-900 text-sm">{formatCurrency(completedOrder.total)}</span>
+              </div>
+              <div className="text-[11px] text-slate-500 pt-1 text-center">
+                Todos os itens e dados acima serão enviados automaticamente no WhatsApp.
+              </div>
+            </div>
+
+            {/* Secondary navigation actions */}
+            <div className="flex items-center justify-center gap-4 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowWhatsAppModal(false);
+                  onNavigate(`/obrigado/${completedOrder.id}`);
+                }}
+                className="text-xs text-slate-500 hover:text-blue-900 underline font-medium cursor-pointer"
+              >
+                Ir para a página de obrigado do pedido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

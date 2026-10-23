@@ -1,7 +1,6 @@
 import React from 'react';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
-import { HeroSection } from '../../components/store/HeroSection';
 import { ProductCard } from '../../components/store/ProductCard';
 
 interface HomePageProps {
@@ -9,37 +8,40 @@ interface HomePageProps {
 }
 
 export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
-  const { products } = useStore();
+  const { products, categories } = useStore();
 
   const activeProducts = products.filter((p) => p.active);
   const featuredProducts = activeProducts.filter((p) => p.featured);
   const pacocasProducts = activeProducts.filter((p) => p.category_id === 'cat-3').slice(0, 4);
 
-  return (
-    <div className="space-y-16 pb-20">
-      {/* Hero Section */}
-      <HeroSection onNavigate={onNavigate} />
+  const categoryImages: Record<string, string> = {
+    'cat-1': '/doces tradicionais.jpg',
+    'cat-3': '/paçocas e amendoim.jpg',
+    'cat-4': '/cocada.webp',
+    'doces-tradicionais': '/doces tradicionais.jpg',
+    'pacocas-amendoim': '/paçocas e amendoim.jpg',
+    'cocadas-doces-de-leite': '/cocada.webp',
+  };
 
-      {/* Featured Products Section */}
+  return (
+    <div className="space-y-16 pb-20 pt-8 sm:pt-12">
+      {/* Featured Products */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-8 gap-4">
           <div>
-            <span className="text-xs uppercase font-bold tracking-widest text-blue-800 flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4 text-amber-500" />
-              Favoritos dos Clientes
-            </span>
-            <h2 className="font-serif text-3xl sm:text-4xl font-bold text-slate-900 mt-1">
-              Doces em Destaque
+            <h2 className="font-serif text-3xl sm:text-4xl font-bold text-slate-900">
+              Produtos em Destaque
             </h2>
             <p className="text-sm text-slate-600 mt-1">
-              Disponíveis para compra imediata por pote individual ou caixa com 6 potes (1X6).
+              Nossos doces mais vendidos com preços especiais para atacado e varejo.
             </p>
           </div>
           <button
             onClick={() => onNavigate('/produtos')}
-            className="px-4 py-2 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-800 text-sm font-semibold transition-colors"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#091129] hover:bg-[#15234f] text-white text-xs font-semibold transition-colors shadow-sm"
           >
-            Ver catálogo completo ({activeProducts.length})
+            <span>Ver catálogo completo ({activeProducts.length})</span>
+            <ArrowRight className="w-4 h-4" />
           </button>
         </div>
 
@@ -50,59 +52,65 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         </div>
       </section>
 
-      {/* Blur & Shadow Section Transition */}
-      <div className="relative py-2 flex items-center justify-center pointer-events-none">
-        <div className="w-full max-w-5xl h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
-        <div className="absolute w-96 h-12 bg-blue-950/5 blur-2xl rounded-full" />
-      </div>
-
-      {/* Tradition & Wholesale Banner */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative">
-          {/* Ambient blur glow & shadow backdrop */}
-          <div className="absolute -inset-2 bg-gradient-to-r from-blue-900/25 via-amber-500/10 to-blue-900/25 rounded-3xl blur-2xl opacity-70 -z-10 pointer-events-none" />
-          <div className="rounded-3xl bg-gradient-to-r from-[#091129] via-[#0d183d] to-[#091129] text-white p-8 sm:p-12 border border-blue-950 shadow-2xl shadow-blue-950/20 overflow-hidden relative">
-            <div className="relative z-10 max-w-2xl space-y-4">
-            <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-white">
-              Autênticos Doces Neuza
-            </h2>
-            <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-              Receitas originais feitas no tacho: <strong>Pé de Moça</strong>, <strong>Paçocas Rolha e Caseira</strong>,{' '}
-              <strong>Cocadas Condensadas</strong>, <strong>Quebra Queixo</strong> e <strong>Leite Pingado</strong>.
-              Embalagens de 600g a 1,4kg prontas para o consumo familiar ou revenda em caixas completas.
-            </p>
-            <div className="pt-2 flex flex-wrap gap-4">
-              <button
-                onClick={() => onNavigate('/produtos')}
-                className="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-lg shadow-emerald-600/20 transition-all active:scale-95"
-              >
-                Ver Catálogo de Doces
-              </button>
-              <button
-                onClick={() => onNavigate('/categoria/pacocas-amendoim')}
-                className="px-6 py-3 rounded-xl border border-blue-600/50 text-blue-200 hover:bg-blue-900/30 font-semibold text-sm transition-colors"
-              >
-                Paçocas & Linha Amendoim
-              </button>
-            </div>
-          </div>
+      {/* Category Selector (Escolha por Categoria) */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+        <div className="text-center space-y-2 mb-8">
+          <h2 className="font-serif text-2xl sm:text-3xl font-bold text-slate-900">
+            Escolha por Categoria
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-600">
+            Navegue pelas linhas de doces tradicionais, paçocas e cocadas artesanais.
+          </p>
         </div>
-      </div>
 
-        {/* Selected Paçocas & Amendoim Showcase */}
-        {pacocasProducts.length > 0 && (
-          <div className="mt-8">
-            <h3 className="font-serif text-xl font-bold text-slate-900 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 justify-items-center max-w-4xl mx-auto">
+          {categories.filter(c => c.active).map((cat) => {
+            const imgUrl = categoryImages[cat.id] || categoryImages[cat.slug] || '/doces tradicionais.jpg';
+            return (
+              <div
+                key={cat.id}
+                onClick={() => onNavigate(`/categoria/${cat.slug}`)}
+                className="group flex flex-col items-center cursor-pointer space-y-3"
+              >
+                <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full p-1.5 bg-[#d6bd2d] shadow-md group-hover:shadow-xl group-hover:scale-105 transition-all duration-300">
+                  <div className="w-full h-full rounded-full overflow-hidden bg-white border-2 border-white">
+                    <img
+                      src={imgUrl}
+                      alt={cat.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                  </div>
+                </div>
+                <h3 className="font-serif text-sm sm:text-base font-bold text-slate-800 text-center group-hover:text-amber-700 transition-colors uppercase tracking-wide">
+                  {cat.name}
+                </h3>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Selected Paçocas & Amendoim Showcase */}
+      {pacocasProducts.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="font-serif text-2xl font-bold text-slate-900">
               Mais Pedidos: Linha Amendoim & Paçocas
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {pacocasProducts.map((product) => (
-                <ProductCard key={product.id} product={product} onNavigate={onNavigate} />
-              ))}
-            </div>
+            <button
+              onClick={() => onNavigate('/categoria/pacocas-amendoim')}
+              className="text-xs font-semibold text-blue-900 hover:underline"
+            >
+              Ver todos da categoria →
+            </button>
           </div>
-        )}
-      </section>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {pacocasProducts.map((product) => (
+              <ProductCard key={product.id} product={product} onNavigate={onNavigate} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 };

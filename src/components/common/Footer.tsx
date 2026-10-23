@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPin, Phone, Mail, Clock, Heart, ShieldCheck } from 'lucide-react';
+import { MapPin, Phone, Mail, Clock, Heart, ShieldCheck, Lock } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
 
 interface FooterProps {
@@ -78,6 +78,16 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                   Meu Carrinho
                 </button>
               </li>
+              <li>
+                <button
+                  id="footer-area-restrita-btn"
+                  onClick={() => onNavigate('/admin/login')}
+                  className="hover:text-amber-300 hover:translate-x-1 transition-all text-amber-200/90 font-medium flex items-center gap-1.5"
+                >
+                  <Lock className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Área Restrita</span>
+                </button>
+              </li>
             </ul>
           </div>
 
@@ -108,36 +118,43 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             </ul>
           </div>
 
-          {/* Col 4: Commercial & Administrative */}
+          {/* Col 4: Commercial & Distribution */}
           <div className="space-y-3">
-            <h3 className="font-serif text-base font-semibold text-amber-300">Informações Comerciais</h3>
+            <h3 className="font-serif text-base font-semibold text-amber-300">Distribuição Oficial</h3>
             <div className="bg-[#0b1638] p-3.5 rounded-xl border border-blue-900/60 text-xs text-slate-300 space-y-2 shadow-inner">
               <div className="font-semibold text-amber-300 flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-amber-400" />
-                Nota Fiscal Disponível
+                IR Distribuidora
               </div>
               <p className="text-slate-400">
-                Opção de faturamento com Nota Fiscal (acréscimo comercial de {settings.invoice_fee_percentage}%)
-                para distribuidores, mercados e revendedores.
+                Distribuição e comercialização oficial dos doces artesanais Neuza. Vendas no atacado e varejo para todo o Brasil.
               </p>
             </div>
-            <div className="pt-2">
-              <button
-                onClick={() => onNavigate('/admin')}
-                className="text-xs text-slate-400 hover:text-amber-300 underline underline-offset-2 flex items-center gap-1"
-              >
-                Acesso Restrito do Administrador
-              </button>
+            <div className="pt-1">
+              <p className="text-xs text-slate-400">
+                Entregas e frete combinados diretamente com o departamento comercial via WhatsApp.
+              </p>
             </div>
           </div>
         </div>
 
         <div className="mt-12 pt-6 border-t border-blue-950 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
           <p>© {new Date().getFullYear()} Neuza Doces. Todos os direitos reservados. CNPJ 18.492.301/0001-44</p>
-          <div className="flex items-center gap-1 text-slate-400">
-            <span>Feito com</span>
-            <Heart className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-            <span>para amantes de doces artesanais brasileiros</span>
+          <div className="flex items-center gap-4 text-slate-400">
+            <button
+              id="footer-bottom-area-restrita-btn"
+              onClick={() => onNavigate('/admin/login')}
+              className="hover:text-amber-300 transition-colors flex items-center gap-1.5"
+            >
+              <Lock className="w-3.5 h-3.5 text-amber-400" />
+              <span>Área Restrita</span>
+            </button>
+            <span>•</span>
+            <div className="flex items-center gap-1 text-slate-400">
+              <span>Feito com</span>
+              <Heart className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+              <span>para amantes de doces artesanais brasileiros</span>
+            </div>
           </div>
         </div>
       </div>

@@ -25,14 +25,6 @@ export const INITIAL_CATEGORIES: Category[] = [
     active: true,
     created_at: '2026-01-10T10:00:00Z',
   },
-  {
-    id: 'cat-5',
-    name: 'Geleias & Frutas',
-    slug: 'geleias-frutas',
-    description: 'Geleias caseiras puras de frutas e doces tradicionais de frutas brasileiras.',
-    active: true,
-    created_at: '2026-01-10T10:00:00Z',
-  },
 ];
 
 // Beautiful high-res artisanal confectionery photography
@@ -236,7 +228,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     description: 'Geleia tradicional de banana caramelizada no tacho, cor dourada brilhante e sabor concentrado.',
     short_description: 'Geleia artesanal pura de banana 1.1kg.',
     weight: '1.1KG',
-    category_id: 'cat-5',
+    category_id: 'cat-1',
     line: 'Doces Tradicionais',
     packaging: 'CX 1X6',
     package_qty_info: '20 unidades',
@@ -261,7 +253,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     description: 'Mix harmonioso de frutas selecionadas cozidas lentamente sem aditivos químicos.',
     short_description: 'Geleia de frutas mistas artesanal 1.1kg.',
     weight: '1.1KG',
-    category_id: 'cat-5',
+    category_id: 'cat-1',
     line: 'Doces Tradicionais',
     packaging: 'CX 1X6',
     package_qty_info: '20 unidades',
@@ -1814,13 +1806,13 @@ export const INITIAL_SETTINGS: StoreSettings = {
   neighborhood: 'Vila Nova Confeitaria',
   city: 'Valinhos',
   state: 'SP',
-  instagram: '@neuzadocesoficial',
+  instagram: '@docesneuzaa',
   facebook: 'neuzadocesartesanais',
   tiktok: '@neuzadoces',
   invoice_fee_percentage: 7, // 7% de acréscimo para Nota Fiscal
   minimum_order_value: 50.00,
-  free_shipping_threshold: 300.00,
-  flat_shipping_fee: 15.00,
+  free_shipping_threshold: 0,
+  flat_shipping_fee: 0,
   pix_key: 'renatoinacio2@gmail.com',
 };
 

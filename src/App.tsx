@@ -11,6 +11,7 @@ import { ProductDetailPage } from './pages/store/ProductDetailPage';
 import { CartPage } from './pages/store/CartPage';
 import { CheckoutPage } from './pages/store/CheckoutPage';
 import { OrderSuccessPage } from './pages/store/OrderSuccessPage';
+import { SitemapPage } from './pages/store/SitemapPage';
 
 // Admin Pages
 import { AdminLoginPage } from './pages/admin/AdminLoginPage';
@@ -96,8 +97,15 @@ function AppContent() {
 
       {cleanPath === '/checkout' && <CheckoutPage onNavigate={navigate} />}
 
-      {cleanPath.startsWith('/pedido/') && (
-        <OrderSuccessPage orderId={cleanPath.replace('/pedido/', '')} onNavigate={navigate} />
+      {(cleanPath === '/sitemap' || cleanPath === '/mapa-do-site') && (
+        <SitemapPage onNavigate={navigate} />
+      )}
+
+      {(cleanPath.startsWith('/pedido/') || cleanPath.startsWith('/obrigado/')) && (
+        <OrderSuccessPage
+          orderId={cleanPath.replace('/pedido/', '').replace('/obrigado/', '')}
+          onNavigate={navigate}
+        />
       )}
     </StoreLayout>
   );
