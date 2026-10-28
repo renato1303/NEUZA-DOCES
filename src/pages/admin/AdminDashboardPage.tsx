@@ -11,6 +11,7 @@ import {
   Calendar,
   ChevronRight,
   Sparkles,
+  Trash2,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -36,7 +37,7 @@ interface AdminDashboardPageProps {
 }
 
 export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNavigate }) => {
-  const { orders, products, categories } = useStore();
+  const { orders, products, categories, clearAdminData } = useStore();
   const [period, setPeriod] = useState<DashboardPeriod>('todos');
   const [rankingMode, setRankingMode] = useState<'quantity' | 'revenue'>('revenue');
 
@@ -196,30 +197,47 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNaviga
           </p>
         </div>
 
-        {/* Period Selector Tabs */}
-        <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 overflow-x-auto text-xs shadow-2xs">
-          {(
-            [
-              { id: 'hoje', label: 'Hoje' },
-              { id: '7dias', label: '7 Dias' },
-              { id: '30dias', label: '30 Dias' },
-              { id: 'mes_atual', label: 'Este Mês' },
-              { id: 'ano_atual', label: 'Este Ano' },
-              { id: 'todos', label: 'Todo Período' },
-            ] as const
-          ).map((t) => (
+        <div className="flex flex-wrap items-center gap-2">
+          {orders.length > 0 && (
             <button
-              key={t.id}
-              onClick={() => setPeriod(t.id)}
-              className={`px-3 py-1.5 rounded-lg font-semibold transition-all whitespace-nowrap ${
-                period === t.id
-                  ? 'bg-[#101e4a] text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
+              onClick={() => {
+                if (confirm('Deseja limpar todos os pedidos e dados de vendas do painel?')) {
+                  clearAdminData();
+                }
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 text-xs font-semibold transition-colors shadow-2xs"
+              title="Limpar todos os dados de vendas do painel"
             >
-              {t.label}
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Limpar Dados</span>
             </button>
-          ))}
+          )}
+
+          {/* Period Selector Tabs */}
+          <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 overflow-x-auto text-xs shadow-2xs">
+            {(
+              [
+                { id: 'hoje', label: 'Hoje' },
+                { id: '7dias', label: '7 Dias' },
+                { id: '30dias', label: '30 Dias' },
+                { id: 'mes_atual', label: 'Este Mês' },
+                { id: 'ano_atual', label: 'Este Ano' },
+                { id: 'todos', label: 'Todo Período' },
+              ] as const
+            ).map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setPeriod(t.id)}
+                className={`px-3 py-1.5 rounded-lg font-semibold transition-all whitespace-nowrap ${
+                  period === t.id
+                    ? 'bg-[#101e4a] text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -476,33 +494,39 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNaviga
           </div>
 
           <div className="divide-y divide-slate-100 space-y-2">
-            {topProductsRanking.map((prod, idx) => (
-              <div key={prod.id} className="pt-2 flex items-center justify-between text-xs">
-                <div className="flex items-center gap-3">
-                  <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-600 font-bold text-[11px] flex items-center justify-center">
-                    {idx + 1}
-                  </span>
-                  {prod.image && (
-                    <img
-                      src={prod.image}
-                      alt={prod.name}
-                      className="w-9 h-9 rounded-lg object-cover border border-slate-200"
-                    />
-                  )}
-                  <div>
-                    <span className="font-semibold text-slate-900 line-clamp-1">
-                      {prod.name}
-                    </span>
-                    <span className="text-[11px] text-slate-400">
-                      {prod.quantity} potes vendidos
-                    </span>
-                  </div>
-                </div>
-                <span className="font-bold text-slate-900">
-                  {formatCurrency(prod.revenue)}
-                </span>
+            {topProductsRanking.length === 0 ? (
+              <div className="py-8 text-center text-slate-400 text-xs">
+                Nenhuma venda registrada ainda.
               </div>
-            ))}
+            ) : (
+              topProductsRanking.map((prod, idx) => (
+                <div key={prod.id} className="pt-2 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-3">
+                    <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-600 font-bold text-[11px] flex items-center justify-center">
+                      {idx + 1}
+                    </span>
+                    {prod.image && (
+                      <img
+                        src={prod.image}
+                        alt={prod.name}
+                        className="w-9 h-9 rounded-lg object-cover border border-slate-200"
+                      />
+                    )}
+                    <div>
+                      <span className="font-semibold text-slate-900 line-clamp-1">
+                        {prod.name}
+                      </span>
+                      <span className="text-[11px] text-slate-400">
+                        {prod.quantity} potes vendidos
+                      </span>
+                    </div>
+                  </div>
+                  <span className="font-bold text-slate-900">
+                    {formatCurrency(prod.revenue)}
+                  </span>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
@@ -522,48 +546,54 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNaviga
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="text-slate-400 uppercase tracking-wider border-b border-slate-100 text-[10px]">
-                  <th className="pb-2 font-semibold">Nº Pedido</th>
-                  <th className="pb-2 font-semibold">Cliente</th>
-                  <th className="pb-2 font-semibold">NF (7%)</th>
-                  <th className="pb-2 font-semibold">Total</th>
-                  <th className="pb-2 font-semibold">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {orders.slice(0, 6).map((order) => (
-                  <tr
-                    key={order.id}
-                    onClick={() => onNavigate(`/admin/pedidos`)}
-                    className="hover:bg-slate-50 cursor-pointer transition-colors"
-                  >
-                    <td className="py-2.5 font-bold font-mono text-slate-900">
-                      {order.order_number}
-                    </td>
-                    <td className="py-2.5 font-medium text-slate-800">
-                      {order.customer.name}
-                    </td>
-                    <td className="py-2.5">
-                      {order.has_invoice ? (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300/60">
-                          Sim (+7%)
-                        </span>
-                      ) : (
-                        <span className="text-[10px] text-slate-400">Não</span>
-                      )}
-                    </td>
-                    <td className="py-2.5 font-bold text-slate-900 font-serif">
-                      {formatCurrency(order.total)}
-                    </td>
-                    <td className="py-2.5">
-                      <OrderStatusBadge status={order.status} />
-                    </td>
+            {orders.length === 0 ? (
+              <div className="py-10 text-center text-slate-400 text-xs">
+                Nenhum pedido registrado no momento. Novos pedidos feitos na vitrine aparecerão aqui.
+              </div>
+            ) : (
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="text-slate-400 uppercase tracking-wider border-b border-slate-100 text-[10px]">
+                    <th className="pb-2 font-semibold">Nº Pedido</th>
+                    <th className="pb-2 font-semibold">Cliente</th>
+                    <th className="pb-2 font-semibold">NF (7%)</th>
+                    <th className="pb-2 font-semibold">Total</th>
+                    <th className="pb-2 font-semibold">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {orders.slice(0, 6).map((order) => (
+                    <tr
+                      key={order.id}
+                      onClick={() => onNavigate(`/admin/pedidos`)}
+                      className="hover:bg-slate-50 cursor-pointer transition-colors"
+                    >
+                      <td className="py-2.5 font-bold font-mono text-slate-900">
+                        {order.order_number}
+                      </td>
+                      <td className="py-2.5 font-medium text-slate-800">
+                        {order.customer.name}
+                      </td>
+                      <td className="py-2.5">
+                        {order.has_invoice ? (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300/60">
+                            Sim (+7%)
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-slate-400">Não</span>
+                        )}
+                      </td>
+                      <td className="py-2.5 font-bold text-slate-900 font-serif">
+                        {formatCurrency(order.total)}
+                      </td>
+                      <td className="py-2.5">
+                        <OrderStatusBadge status={order.status} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       </div>

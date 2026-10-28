@@ -356,9 +356,13 @@ export const SitemapPage: React.FC<SitemapPageProps> = ({ onNavigate }) => {
               <Phone className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
               <div>
                 <strong className="block text-slate-800 font-semibold">Contatos Oficiais</strong>
-                <span>Comercial WhatsApp: (15) 99157-6707</span>
-                <br />
-                <span>Telefone: {settings.phone}</span>
+                <span>Comercial WhatsApp: {settings.whatsapp || '(15) 99157-6707'}</span>
+                {settings.phone ? (
+                  <>
+                    <br />
+                    <span>Telefone: {settings.phone}</span>
+                  </>
+                ) : null}
               </div>
             </div>
 

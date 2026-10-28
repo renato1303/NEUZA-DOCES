@@ -7,12 +7,14 @@ import {
   Search,
   Package,
   ArrowUpDown,
+  RotateCcw,
+  ClipboardList,
 } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
 import { StockBadge } from '../../components/common/Badge';
 
 export const AdminStockPage: React.FC = () => {
-  const { products, updateProductStock } = useStore();
+  const { products, updateProductStock, zeroAllProductStocks } = useStore();
   const [search, setSearch] = useState('');
   const [stockFilter, setStockFilter] = useState<'all' | 'normal' | 'low' | 'out'>('all');
 
@@ -49,14 +51,43 @@ export const AdminStockPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="font-serif text-2xl sm:text-3xl font-bold text-slate-900">
-          Controle de Estoque
-        </h1>
-        <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-          Acompanhamento de estoque em potes individuais e caixas fechadas (CX 1X6).
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="font-serif text-2xl sm:text-3xl font-bold text-slate-900">
+            Controle de Estoque & Inventário
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            Acompanhamento e ajuste de estoque em potes individuais e caixas fechadas (CX 1X6).
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            if (window.confirm('Deseja zerar o estoque de todos os produtos para realizar o inventário físico da fábrica? Todos os produtos ficarão com 0 potes.')) {
+              zeroAllProductStocks();
+            }
+          }}
+          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs transition-colors self-start sm:self-auto cursor-pointer"
+          title="Zerar todos os estoques para contagem de inventário"
+        >
+          <RotateCcw className="w-3.5 h-3.5" />
+          <span>Zerar Estoques (Inventário)</span>
+        </button>
       </div>
+
+      {/* Inventory Banner if all stocks are 0 */}
+      {stats.totalPots === 0 && (
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3 text-amber-900 shadow-2xs">
+          <ClipboardList className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="space-y-0.5 text-xs">
+            <span className="font-bold text-sm block">Inventário Geral Ativo (Estoques Zerados)</span>
+            <p className="text-amber-800 leading-relaxed">
+              Todos os estoques foram zerados para o levantamento de contagem física. Conforme a equipe for coletando as quantidades reais dos potes na fábrica, você pode digitar o número exato diretamente no campo de cada doce abaixo ou utilizar os botões de ajuste rápido.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* 4 Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -209,8 +240,21 @@ export const AdminStockPage: React.FC = () => {
                       </span>
                     </td>
 
-                    <td className="py-3 px-4 font-mono font-bold text-slate-900 text-sm">
-                      {product.stock} potes
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="number"
+                          min="0"
+                          value={product.stock}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value, 10);
+                            updateProductStock(product.id, isNaN(val) ? 0 : Math.max(0, val));
+                          }}
+                          className="w-20 px-2.5 py-1 rounded-lg border border-slate-300 font-mono font-bold text-slate-900 text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-hidden"
+                          title="Digite a quantidade exata apurada no inventário"
+                        />
+                        <span className="text-xs text-slate-500">potes</span>
+                      </div>
                     </td>
 
                     <td className="py-3 px-4 text-slate-700">

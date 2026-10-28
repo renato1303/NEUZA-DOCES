@@ -283,6 +283,24 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ slug, onNa
               </div>
             </div>
 
+            {/* Inventory / Out of stock message with direct WhatsApp order */}
+            {isOutOfStock && (
+              <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div>
+                  <span className="font-bold block text-amber-950">Aguardando contagem de inventário / sob encomenda</span>
+                  <span className="text-amber-800 text-[11px]">Consulte lotes ou faça sua encomenda diretamente com a fábrica.</span>
+                </div>
+                <a
+                  href={`https://wa.me/5515991576707?text=${encodeURIComponent(`Olá! Gostaria de consultar a disponibilidade do doce ${product.name} (${selectedFormat === 'caixa' ? 'Caixa 1x6' : 'Pote avulso'}).`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shrink-0 transition-colors shadow-2xs"
+                >
+                  Consultar no WhatsApp
+                </a>
+              </div>
+            )}
+
             {/* Action buttons */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
               <button

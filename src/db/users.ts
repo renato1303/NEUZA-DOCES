@@ -40,15 +40,41 @@ export async function isAuthorizedAdmin(email: string): Promise<boolean> {
       return true;
     }
     
-    // Default authorized admins
-    if (cleanEmail === 'renatoinacio2@gmail.com' || cleanEmail === 'admin@neuzadoces.com.br') {
+    // Default authorized admins and company domain
+    if (
+      cleanEmail === 'renatoinacio2@gmail.com' ||
+      cleanEmail === 'admin@neuzadoces.com.br' ||
+      cleanEmail.endsWith('@neuzadoces.com.br')
+    ) {
       return true;
     }
     return false;
   } catch (error) {
     console.error('Error checking authorized admin:', error);
     const cleanEmail = email.toLowerCase().trim();
-    return cleanEmail === 'renatoinacio2@gmail.com' || cleanEmail === 'admin@neuzadoces.com.br';
+    return (
+      cleanEmail === 'renatoinacio2@gmail.com' ||
+      cleanEmail === 'admin@neuzadoces.com.br' ||
+      cleanEmail.endsWith('@neuzadoces.com.br')
+    );
+  }
+}
+
+export async function getAdminByEmail(email: string) {
+  try {
+    const cleanEmail = email.toLowerCase().trim();
+    const records = await db
+      .select()
+      .from(authorizedAdmins)
+      .where(eq(authorizedAdmins.email, cleanEmail));
+
+    if (records.length > 0) {
+      return records[0];
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching admin by email:', error);
+    return null;
   }
 }
 

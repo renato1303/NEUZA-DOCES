@@ -207,46 +207,52 @@ export const AdminReportsPage: React.FC = () => {
             </span>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider text-[10px] border-b border-slate-200">
-                <tr>
-                  <th className="py-2.5 px-4 font-bold">Nº Pedido</th>
-                  <th className="py-2.5 px-4 font-bold">Data</th>
-                  <th className="py-2.5 px-4 font-bold">Cliente</th>
-                  <th className="py-2.5 px-4 font-bold">Subtotal</th>
-                  <th className="py-2.5 px-4 font-bold">NF (7%)</th>
-                  <th className="py-2.5 px-4 font-bold">Frete</th>
-                  <th className="py-2.5 px-4 font-bold">Total</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {validOrders.map((o) => (
-                  <tr key={o.id} className="hover:bg-slate-50">
-                    <td className="py-2.5 px-4 font-mono font-bold text-slate-900">
-                      {o.order_number}
-                    </td>
-                    <td className="py-2.5 px-4 text-slate-500">{formatDateTime(o.created_at)}</td>
-                    <td className="py-2.5 px-4 text-slate-800 font-medium">{o.customer.name}</td>
-                    <td className="py-2.5 px-4 text-slate-700">{formatCurrency(o.subtotal)}</td>
-                    <td className="py-2.5 px-4">
-                      {o.has_invoice ? (
-                        <span className="text-blue-900 font-bold">
-                          +{formatCurrency(o.invoice_fee_amount)}
-                        </span>
-                      ) : (
-                        <span className="text-slate-300">-</span>
-                      )}
-                    </td>
-                    <td className="py-2.5 px-4 text-slate-600">
-                      {o.shipping === 0 ? 'Grátis' : formatCurrency(o.shipping)}
-                    </td>
-                    <td className="py-2.5 px-4 font-serif font-bold text-slate-900">
-                      {formatCurrency(o.total)}
-                    </td>
+            {validOrders.length === 0 ? (
+              <div className="py-12 text-center text-slate-400 text-xs">
+                Nenhum pedido registrado para geração de extrato de vendas.
+              </div>
+            ) : (
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider text-[10px] border-b border-slate-200">
+                  <tr>
+                    <th className="py-2.5 px-4 font-bold">Nº Pedido</th>
+                    <th className="py-2.5 px-4 font-bold">Data</th>
+                    <th className="py-2.5 px-4 font-bold">Cliente</th>
+                    <th className="py-2.5 px-4 font-bold">Subtotal</th>
+                    <th className="py-2.5 px-4 font-bold">NF (7%)</th>
+                    <th className="py-2.5 px-4 font-bold">Frete</th>
+                    <th className="py-2.5 px-4 font-bold">Total</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {validOrders.map((o) => (
+                    <tr key={o.id} className="hover:bg-slate-50">
+                      <td className="py-2.5 px-4 font-mono font-bold text-slate-900">
+                        {o.order_number}
+                      </td>
+                      <td className="py-2.5 px-4 text-slate-500">{formatDateTime(o.created_at)}</td>
+                      <td className="py-2.5 px-4 text-slate-800 font-medium">{o.customer.name}</td>
+                      <td className="py-2.5 px-4 text-slate-700">{formatCurrency(o.subtotal)}</td>
+                      <td className="py-2.5 px-4">
+                        {o.has_invoice ? (
+                          <span className="text-blue-900 font-bold">
+                            +{formatCurrency(o.invoice_fee_amount)}
+                          </span>
+                        ) : (
+                          <span className="text-slate-300">-</span>
+                        )}
+                      </td>
+                      <td className="py-2.5 px-4 text-slate-600">
+                        {o.shipping === 0 ? 'Grátis' : formatCurrency(o.shipping)}
+                      </td>
+                      <td className="py-2.5 px-4 font-serif font-bold text-slate-900">
+                        {formatCurrency(o.total)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       )}

@@ -11,6 +11,8 @@ import {
   Sparkles,
   AlertTriangle,
   ExternalLink,
+  RotateCcw,
+  ClipboardList,
 } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
 import { Product } from '../../types';
@@ -30,6 +32,7 @@ export const AdminProductsPage: React.FC<AdminProductsPageProps> = ({ onNavigate
     deleteProduct,
     toggleProductActive,
     updateProductStock,
+    zeroAllProductStocks,
   } = useStore();
 
   const [search, setSearch] = useState('');
@@ -49,7 +52,7 @@ export const AdminProductsPage: React.FC<AdminProductsPageProps> = ({ onNavigate
   const [formPriceUnit, setFormPriceUnit] = useState('22.90');
   const [formPriceBox, setFormPriceBox] = useState('129.00');
   const [formUnitsPerBox, setFormUnitsPerBox] = useState('6');
-  const [formStock, setFormStock] = useState('50');
+  const [formStock, setFormStock] = useState('0');
   const [formMinStock, setFormMinStock] = useState('10');
   const [formImageUrl, setFormImageUrl] = useState('');
   const [formDescription, setFormDescription] = useState('');
@@ -87,7 +90,7 @@ export const AdminProductsPage: React.FC<AdminProductsPageProps> = ({ onNavigate
     setFormPriceUnit('22.90');
     setFormPriceBox('129.00');
     setFormUnitsPerBox('6');
-    setFormStock('40');
+    setFormStock('0');
     setFormMinStock('10');
     setFormImageUrl(
       'https://images.unsplash.com/photo-1599599810769-bcde5a160d32?auto=format&fit=crop&w=600&q=80'
@@ -201,15 +204,44 @@ export const AdminProductsPage: React.FC<AdminProductsPageProps> = ({ onNavigate
           </p>
         </div>
 
-        <button
-          id="btn-add-product"
-          onClick={handleOpenAddModal}
-          className="px-4 py-2.5 rounded-xl bg-[#101e4a] hover:bg-[#192f75] text-white font-bold text-xs shadow-xs flex items-center gap-2 self-start sm:self-auto active:scale-95 transition-all"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Cadastrar Novo Doce</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm('Deseja zerar o estoque de todos os produtos para realizar o inventário físico da fábrica? Todos os produtos ficarão com 0 potes.')) {
+                zeroAllProductStocks();
+              }
+            }}
+            className="px-3.5 py-2.5 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs shadow-2xs flex items-center gap-2 active:scale-95 transition-all cursor-pointer"
+            title="Zerar todos os estoques para contagem de inventário"
+          >
+            <RotateCcw className="w-4 h-4" />
+            <span>Zerar Estoques (Inventário)</span>
+          </button>
+
+          <button
+            id="btn-add-product"
+            onClick={handleOpenAddModal}
+            className="px-4 py-2.5 rounded-xl bg-[#101e4a] hover:bg-[#192f75] text-white font-bold text-xs shadow-xs flex items-center gap-2 active:scale-95 transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Cadastrar Novo Doce</span>
+          </button>
+        </div>
       </div>
+
+      {/* Inventory Banner if all stocks are 0 */}
+      {products.length > 0 && products.every(p => p.stock === 0) && (
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3 text-amber-900 shadow-2xs">
+          <ClipboardList className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="space-y-0.5 text-xs">
+            <span className="font-bold text-sm block">Inventário Geral Ativo (Estoques Zerados)</span>
+            <p className="text-amber-800 leading-relaxed">
+              Todos os doces estão com estoque em 0 potes para a realização do inventário físico da fábrica. Ajuste as quantidades diretamente na aba <strong>Estoque</strong> conforme as contagens forem apuradas.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Filter Toolbar */}
       <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs grid grid-cols-1 sm:grid-cols-3 gap-3">

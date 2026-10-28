@@ -40,6 +40,7 @@ interface StoreContextType {
   duplicateProduct: (id: string) => void;
   toggleProductActive: (id: string) => void;
   updateProductStock: (id: string, newStock: number) => void;
+  zeroAllProductStocks: () => void;
 
   // Category actions
   addCategory: (category: Omit<Category, 'id' | 'created_at'>) => Category;
@@ -80,8 +81,9 @@ interface StoreContextType {
   login: (email: string, password?: string) => { success: boolean; message?: string };
   logout: () => void;
 
-  // Reset
+  // Reset & Clear
   resetDemoData: () => void;
+  clearAdminData: () => void;
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
@@ -89,12 +91,12 @@ const StoreContext = createContext<StoreContextType | undefined>(undefined);
 const STORAGE_KEYS = {
   PRODUCTS: 'neuza_products_v4',
   CATEGORIES: 'neuza_categories_v4',
-  CUSTOMERS: 'neuza_customers_v4',
-  ORDERS: 'neuza_orders_v4',
+  CUSTOMERS: 'neuza_customers_v5_clean',
+  ORDERS: 'neuza_orders_v5_clean',
   SETTINGS: 'neuza_settings_v4',
   CART: 'neuza_cart_v4',
   USER: 'neuza_user_v4',
-  NOTIFICATIONS: 'neuza_notifications_v4',
+  NOTIFICATIONS: 'neuza_notifications_v5_clean',
 };
 
 function getStorage<T>(key: string, fallback: T): T {
@@ -109,10 +111,11 @@ function getStorage<T>(key: string, fallback: T): T {
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [products, setProducts] = useState<Product[]>(() => {
     const loaded = getStorage<Product[]>(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS);
-    // Always guarantee real local photos (/1.jpeg to /22.jpeg) are applied
+    const hasInventoryZeroed = localStorage.getItem('neuza_inventory_zeroed_2026');
+    // Always guarantee real local photos (/1.jpeg to /22.jpeg) are applied and stocks zeroed for inventory
     const synced = INITIAL_PRODUCTS.map((initialP) => {
       const existing = loaded.find((p) => p.id === initialP.id);
-      return existing
+      const base = existing
         ? {
             ...existing,
             category_id: existing.category_id === 'cat-5' ? 'cat-1' : (existing.category_id || initialP.category_id),
@@ -120,7 +123,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             gallery: initialP.gallery,
           }
         : initialP;
+
+      if (!hasInventoryZeroed) {
+        return { ...base, stock: 0 };
+      }
+      return base;
     });
+
+    if (!hasInventoryZeroed) {
+      localStorage.setItem('neuza_inventory_zeroed_2026', 'true');
+      localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(synced));
+    }
+
     return synced;
   });
   const [categories, setCategories] = useState<Category[]>(() => {
@@ -135,10 +149,24 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     getStorage(STORAGE_KEYS.ORDERS, INITIAL_ORDERS)
   );
   const [settings, setSettings] = useState<StoreSettings>(() => {
-    const loaded = getStorage(STORAGE_KEYS.SETTINGS, INITIAL_SETTINGS);
+    const loaded = getStorage<StoreSettings>(STORAGE_KEYS.SETTINGS, INITIAL_SETTINGS);
+    const hasOldDefaultAddress =
+      !loaded.street ||
+      loaded.street.includes('Palmeiras Artesanais') ||
+      loaded.city === 'Valinhos' ||
+      loaded.zip_code === '13270-000';
     return {
       ...INITIAL_SETTINGS,
       ...loaded,
+      street: hasOldDefaultAddress ? INITIAL_SETTINGS.street : loaded.street,
+      number: hasOldDefaultAddress ? INITIAL_SETTINGS.number : loaded.number,
+      neighborhood: hasOldDefaultAddress ? INITIAL_SETTINGS.neighborhood : loaded.neighborhood,
+      city: hasOldDefaultAddress ? INITIAL_SETTINGS.city : loaded.city,
+      state: hasOldDefaultAddress ? INITIAL_SETTINGS.state : loaded.state,
+      zip_code: hasOldDefaultAddress ? INITIAL_SETTINGS.zip_code : loaded.zip_code,
+      address: hasOldDefaultAddress ? INITIAL_SETTINGS.address : (loaded.address || INITIAL_SETTINGS.address),
+      phone: (loaded.phone && (loaded.phone.includes('(19)') || loaded.phone.includes('3243-1200'))) ? '' : (loaded.phone || ''),
+      whatsapp: (loaded.whatsapp && loaded.whatsapp.includes('(19)')) ? INITIAL_SETTINGS.whatsapp : (loaded.whatsapp || INITIAL_SETTINGS.whatsapp),
       pix_key: loaded.pix_key || INITIAL_SETTINGS.pix_key,
     };
   });
@@ -152,7 +180,48 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     getStorage(STORAGE_KEYS.NOTIFICATIONS, INITIAL_NOTIFICATIONS)
   );
 
-  // Sync to localStorage
+  // Synchronize state with Cloud SQL / PostgreSQL backend on mount
+  useEffect(() => {
+    let isMounted = true;
+    async function loadFromBackend() {
+      try {
+        const [prodRes, catRes, custRes, ordRes, setRes] = await Promise.allSettled([
+          fetch('/api/products').then((r) => (r.ok ? r.json() : null)),
+          fetch('/api/categories').then((r) => (r.ok ? r.json() : null)),
+          fetch('/api/customers').then((r) => (r.ok ? r.json() : null)),
+          fetch('/api/orders').then((r) => (r.ok ? r.json() : null)),
+          fetch('/api/settings').then((r) => (r.ok ? r.json() : null)),
+        ]);
+
+        if (!isMounted) return;
+
+        if (prodRes.status === 'fulfilled' && Array.isArray(prodRes.value) && prodRes.value.length > 0) {
+          setProducts(prodRes.value);
+        }
+        if (catRes.status === 'fulfilled' && Array.isArray(catRes.value) && catRes.value.length > 0) {
+          setCategories(catRes.value);
+        }
+        if (custRes.status === 'fulfilled' && Array.isArray(custRes.value)) {
+          setCustomers(custRes.value);
+        }
+        if (ordRes.status === 'fulfilled' && Array.isArray(ordRes.value)) {
+          setOrders(ordRes.value);
+        }
+        if (setRes.status === 'fulfilled' && setRes.value && typeof setRes.value === 'object') {
+          setSettings((prev) => ({ ...prev, ...setRes.value }));
+        }
+      } catch (err) {
+        console.warn('Database load warning:', err);
+      }
+    }
+
+    loadFromBackend();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Sync to localStorage as local instant cache
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
   }, [products]);
@@ -195,6 +264,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       updated_at: new Date().toISOString(),
     };
     setProducts((prev) => [newProduct, ...prev]);
+
+    // Persist to PostgreSQL database
+    fetch('/api/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newProduct),
+    }).catch(console.error);
+
     return newProduct;
   };
 
@@ -211,10 +288,22 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         return p;
       })
     );
+
+    // Persist to PostgreSQL database
+    fetch(`/api/products/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates),
+    }).catch(console.error);
   };
 
   const deleteProduct = (id: string) => {
     setProducts((prev) => prev.filter((p) => p.id !== id));
+
+    // Persist to PostgreSQL database
+    fetch(`/api/products/${id}`, {
+      method: 'DELETE',
+    }).catch(console.error);
   };
 
   const duplicateProduct = (id: string) => {
@@ -229,12 +318,30 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       updated_at: new Date().toISOString(),
     };
     setProducts((prev) => [duplicated, ...prev]);
+
+    // Persist to PostgreSQL database
+    fetch('/api/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(duplicated),
+    }).catch(console.error);
   };
 
   const toggleProductActive = (id: string) => {
+    const target = products.find((p) => p.id === id);
+    if (!target) return;
+    const newActive = !target.active;
+
     setProducts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, active: !p.active, updated_at: new Date().toISOString() } : p))
+      prev.map((p) => (p.id === id ? { ...p, active: newActive, updated_at: new Date().toISOString() } : p))
     );
+
+    // Persist to PostgreSQL database
+    fetch(`/api/products/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ active: newActive }),
+    }).catch(console.error);
   };
 
   const updateProductStock = (id: string, newStock: number) => {
@@ -242,6 +349,31 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setProducts((prev) =>
       prev.map((p) => (p.id === id ? { ...p, stock: sanitizedStock, updated_at: new Date().toISOString() } : p))
     );
+
+    // Persist to PostgreSQL database
+    fetch(`/api/products/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stock: sanitizedStock }),
+    }).catch(console.error);
+  };
+
+  const zeroAllProductStocks = () => {
+    setProducts((prev) => {
+      const zeroed = prev.map((p) => ({ ...p, stock: 0, updated_at: new Date().toISOString() }));
+      localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(zeroed));
+
+      // Persist to PostgreSQL database
+      zeroed.forEach((p) => {
+        fetch(`/api/products/${p.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ stock: 0 }),
+        }).catch(() => {});
+      });
+
+      return zeroed;
+    });
   };
 
   // Category Actions
@@ -253,6 +385,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       created_at: new Date().toISOString(),
     };
     setCategories((prev) => [...prev, newCategory]);
+
+    // Persist to PostgreSQL database
+    fetch('/api/categories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newCategory),
+    }).catch(console.error);
+
     return newCategory;
   };
 
@@ -260,6 +400,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setCategories((prev) =>
       prev.map((c) => (c.id === id ? { ...c, ...updates } : c))
     );
+
+    const target = categories.find((c) => c.id === id);
+    if (target) {
+      fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...target, ...updates }),
+      }).catch(console.error);
+    }
   };
 
   const deleteCategory = (id: string) => {
@@ -276,6 +425,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       total_spent: 0,
     };
     setCustomers((prev) => [newCustomer, ...prev]);
+
+    // Persist to PostgreSQL database
+    fetch('/api/customers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newCustomer),
+    }).catch(console.error);
+
     return newCustomer;
   };
 
@@ -283,6 +440,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setCustomers((prev) =>
       prev.map((c) => (c.id === id ? { ...c, ...updates } : c))
     );
+
+    const target = customers.find((c) => c.id === id);
+    if (target) {
+      fetch('/api/customers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...target, ...updates }),
+      }).catch(console.error);
+    }
   };
 
   // Order Actions
@@ -442,6 +608,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // 8. Clear cart
     setCart([]);
 
+    // Persist order to PostgreSQL database
+    fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newOrder),
+    }).catch(console.error);
+
     return newOrder;
   };
 
@@ -512,11 +685,27 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         o.id === orderId ? { ...o, status: newStatus, updated_at: new Date().toISOString() } : o
       )
     );
+
+    // Persist status update to PostgreSQL database
+    fetch(`/api/orders/${orderId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus }),
+    }).catch(console.error);
   };
 
   // Settings
   const updateSettings = (newSettings: Partial<StoreSettings>) => {
-    setSettings((prev) => ({ ...prev, ...newSettings }));
+    setSettings((prev) => {
+      const merged = { ...prev, ...newSettings };
+      // Persist to PostgreSQL database
+      fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(merged),
+      }).catch(console.error);
+      return merged;
+    });
   };
 
   // Cart
@@ -622,22 +811,32 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const isAuthenticated = Boolean(currentUser);
 
+  // Clear administrative data (orders, customers, notifications)
+  const clearAdminData = () => {
+    setOrders([]);
+    setCustomers([]);
+    setNotifications([]);
+    localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify([]));
+    localStorage.setItem(STORAGE_KEYS.CUSTOMERS, JSON.stringify([]));
+    localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify([]));
+  };
+
   // Reset to Demo Data
   const resetDemoData = () => {
     setProducts(INITIAL_PRODUCTS);
     setCategories(INITIAL_CATEGORIES);
-    setCustomers(INITIAL_CUSTOMERS);
-    setOrders(INITIAL_ORDERS);
+    setCustomers([]);
+    setOrders([]);
     setSettings(INITIAL_SETTINGS);
     setCart([]);
-    setNotifications(INITIAL_NOTIFICATIONS);
+    setNotifications([]);
     localStorage.removeItem(STORAGE_KEYS.PRODUCTS);
     localStorage.removeItem(STORAGE_KEYS.CATEGORIES);
-    localStorage.removeItem(STORAGE_KEYS.CUSTOMERS);
-    localStorage.removeItem(STORAGE_KEYS.ORDERS);
+    localStorage.setItem(STORAGE_KEYS.CUSTOMERS, JSON.stringify([]));
+    localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify([]));
     localStorage.removeItem(STORAGE_KEYS.SETTINGS);
     localStorage.removeItem(STORAGE_KEYS.CART);
-    localStorage.removeItem(STORAGE_KEYS.NOTIFICATIONS);
+    localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify([]));
   };
 
   return (
@@ -658,6 +857,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         duplicateProduct,
         toggleProductActive,
         updateProductStock,
+        zeroAllProductStocks,
         addCategory,
         updateCategory,
         deleteCategory,
@@ -677,6 +877,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         login,
         logout,
         resetDemoData,
+        clearAdminData,
       }}
     >
       {children}

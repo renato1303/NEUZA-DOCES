@@ -19,8 +19,13 @@ export const AdminSettingsPage: React.FC = () => {
   const [phone, setPhone] = useState(settings.phone);
   const [whatsapp, setWhatsapp] = useState(settings.whatsapp);
   const [email, setEmail] = useState(settings.email);
-  const [address, setAddress] = useState(settings.address);
-  const [cnpj, setCnpj] = useState(settings.cnpj);
+  const [street, setStreet] = useState(settings.street || 'Rua Pastor Carlos de Assumpção Mena');
+  const [number, setNumber] = useState(settings.number || '102');
+  const [neighborhood, setNeighborhood] = useState(settings.neighborhood || 'Parque Jataí');
+  const [city, setCity] = useState(settings.city || 'Votorantim');
+  const [state, setState] = useState(settings.state || 'SP');
+  const [zipCode, setZipCode] = useState(settings.zip_code || '18117-222');
+  const [cnpj, setCnpj] = useState(settings.cnpj || '18.492.301/0001-44');
   const [pixKey, setPixKey] = useState(settings.pix_key || 'renatoinacio2@gmail.com');
   const [invoiceFeePercentage, setInvoiceFeePercentage] = useState(
     String(settings.invoice_fee_percentage)
@@ -39,8 +44,14 @@ export const AdminSettingsPage: React.FC = () => {
       phone: phone.trim(),
       whatsapp: whatsapp.trim(),
       email: email.trim(),
-      address: address.trim(),
-      cnpj: cnpj.trim(),
+      street: street.trim(),
+      number: number.trim(),
+      neighborhood: neighborhood.trim(),
+      city: city.trim(),
+      state: state.trim(),
+      zip_code: zipCode.trim(),
+      address: `${street.trim()}, ${number.trim()} - ${neighborhood.trim()}, ${city.trim()} - ${state.trim()}, ${zipCode.trim()}`,
+      cnpj: (cnpj || '').trim(),
       pix_key: pixKey.trim(),
       invoice_fee_percentage: parseFloat(invoiceFeePercentage) || 7,
       flat_shipping_fee: parseFloat(flatShippingFee) || 15,
@@ -131,13 +142,64 @@ export const AdminSettingsPage: React.FC = () => {
               />
             </div>
 
-            <div className="sm:col-span-2">
-              <label className="block font-bold text-slate-700 mb-1">Endereço da Fábrica</label>
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">CEP da Fábrica</label>
               <input
                 type="text"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
+                value={zipCode}
+                onChange={(e) => setZipCode(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 outline-hidden font-mono"
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Logradouro (Rua / Av)</label>
+              <input
+                type="text"
+                value={street}
+                onChange={(e) => setStreet(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 outline-hidden"
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Número</label>
+              <input
+                type="text"
+                value={number}
+                onChange={(e) => setNumber(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 outline-hidden"
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Bairro</label>
+              <input
+                type="text"
+                value={neighborhood}
+                onChange={(e) => setNeighborhood(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 outline-hidden"
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Cidade</label>
+              <input
+                type="text"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 outline-hidden"
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Estado (UF)</label>
+              <input
+                type="text"
+                value={state}
+                maxLength={2}
+                onChange={(e) => setState(e.target.value.toUpperCase())}
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 outline-hidden uppercase font-mono"
               />
             </div>
           </div>

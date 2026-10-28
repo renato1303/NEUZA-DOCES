@@ -203,6 +203,11 @@ export const AdminOrdersPage: React.FC = () => {
               ))}
             </tbody>
           </table>
+          {filteredOrders.length === 0 && (
+            <div className="py-12 text-center text-slate-400 text-xs">
+              Nenhum pedido registrado ou encontrado com os filtros aplicados.
+            </div>
+          )}
         </div>
       </div>
 

@@ -146,6 +146,11 @@ export const AdminCustomersPage: React.FC = () => {
               ))}
             </tbody>
           </table>
+          {filteredCustomers.length === 0 && (
+            <div className="py-12 text-center text-slate-400 text-xs">
+              Nenhum cliente cadastrado no momento.
+            </div>
+          )}
         </div>
       </div>
 

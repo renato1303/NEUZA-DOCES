@@ -138,6 +138,8 @@ export interface StoreSettings {
   free_shipping_threshold: number;
   flat_shipping_fee: number;
   pix_key: string;
+  address?: string;
+  cnpj?: string;
 }
 
 export type PeriodFilter =
