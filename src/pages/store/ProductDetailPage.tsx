@@ -52,19 +52,17 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ slug, onNa
 
   // Maximum quantity selectable based on stock
   const unitsMultiplier = selectedFormat === 'caixa' ? product.units_per_box : 1;
-  const maxAllowedQuantity = Math.max(1, Math.floor(product.stock / unitsMultiplier));
+  const maxAllowedQuantity = 99;
 
   const unitPrice = selectedFormat === 'caixa' ? product.price_box : product.price_unit;
   const totalPrice = unitPrice * quantity;
 
   const handleAddToCart = () => {
-    if (isOutOfStock) return;
     addToCart(product, selectedFormat, quantity);
     onNavigate('/carrinho');
   };
 
   const handleBuyNow = () => {
-    if (isOutOfStock) return;
     addToCart(product, selectedFormat, quantity);
     onNavigate('/carrinho');
   };
@@ -120,9 +118,11 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ slug, onNa
                 </span>
               </div>
             )}
-            <div className="absolute top-4 right-4">
-              <StockBadge stock={product.stock} minStock={product.minimum_stock} />
-            </div>
+            {product.stock > 0 && (
+              <div className="absolute top-4 right-4">
+                <StockBadge stock={product.stock} minStock={product.minimum_stock} />
+              </div>
+            )}
           </div>
 
           {/* Thumbnails */}
@@ -255,7 +255,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ slug, onNa
                 <button
                   type="button"
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  disabled={quantity <= 1 || isOutOfStock}
+                  disabled={quantity <= 1}
                   className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   <Minus className="w-4 h-4" />
@@ -266,7 +266,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ slug, onNa
                 <button
                   type="button"
                   onClick={() => setQuantity(Math.min(maxAllowedQuantity, quantity + 1))}
-                  disabled={quantity >= maxAllowedQuantity || isOutOfStock}
+                  disabled={quantity >= maxAllowedQuantity}
                   className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   <Plus className="w-4 h-4" />
@@ -283,32 +283,13 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ slug, onNa
               </div>
             </div>
 
-            {/* Inventory / Out of stock message with direct WhatsApp order */}
-            {isOutOfStock && (
-              <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                <div>
-                  <span className="font-bold block text-amber-950">Aguardando contagem de inventário / sob encomenda</span>
-                  <span className="text-amber-800 text-[11px]">Consulte lotes ou faça sua encomenda diretamente com a fábrica.</span>
-                </div>
-                <a
-                  href={`https://wa.me/5515991576707?text=${encodeURIComponent(`Olá! Gostaria de consultar a disponibilidade do doce ${product.name} (${selectedFormat === 'caixa' ? 'Caixa 1x6' : 'Pote avulso'}).`)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shrink-0 transition-colors shadow-2xs"
-                >
-                  Consultar no WhatsApp
-                </a>
-              </div>
-            )}
-
             {/* Action buttons */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
               <button
                 id="product-add-to-cart-btn"
                 type="button"
-                disabled={isOutOfStock}
                 onClick={handleAddToCart}
-                className="py-3.5 px-5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-xs active:scale-95 bg-emerald-50 border-2 border-emerald-600 text-emerald-800 hover:bg-emerald-100 hover:border-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="py-3.5 px-5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-xs active:scale-95 bg-emerald-50 border-2 border-emerald-600 text-emerald-800 hover:bg-emerald-100 hover:border-emerald-700"
               >
                 <ShoppingBag className="w-4 h-4" />
                 <span>Adicionar ao Carrinho</span>
@@ -317,9 +298,8 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ slug, onNa
               <button
                 id="product-buy-now-btn"
                 type="button"
-                disabled={isOutOfStock}
                 onClick={handleBuyNow}
-                className="py-3.5 px-5 rounded-xl font-bold text-sm bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-600/25 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="py-3.5 px-5 rounded-xl font-bold text-sm bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-600/25 active:scale-95"
               >
                 Comprar Agora
               </button>

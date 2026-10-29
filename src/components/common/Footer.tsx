@@ -21,8 +21,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 alt="Neuza Doces"
                 className="h-14 sm:h-18 w-auto object-contain drop-shadow-sm self-start"
               />
-              <span className="text-xs font-bold text-white tracking-wide">
-                distribuído por <span className="font-extrabold text-amber-300">IR Distribuidora</span>
+              <span className="text-xs font-bold text-white tracking-wide uppercase">
+                DISTRIBUÍDO POR <span className="font-extrabold text-amber-300">IR DISTRIBUIDORA</span>
               </span>
             </div>
             <p className="text-sm text-slate-400 leading-relaxed">

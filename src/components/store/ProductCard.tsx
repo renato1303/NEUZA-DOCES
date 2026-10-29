@@ -17,7 +17,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onNavigate })
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (isOutOfStock) return;
     addToCart(product, selectedFormat, 1);
     onNavigate('/carrinho');
   };
@@ -43,15 +42,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onNavigate })
           className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
         />
-
-        {/* Out of stock badge only */}
-        {isOutOfStock && (
-          <div className="absolute top-3 right-3">
-            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-600 text-white shadow-xs">
-              Esgotado
-            </span>
-          </div>
-        )}
 
         {/* Quick view hover icon */}
         <div className="absolute inset-0 bg-[#091129]/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -110,13 +100,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onNavigate })
             <button
               type="button"
               id={`add-to-cart-${product.id}`}
-              disabled={isOutOfStock}
               onClick={handleAddToCart}
-              className={`px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 shadow-sm ${
-                isOutOfStock
-                  ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
-                  : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20 hover:shadow-emerald-600/30'
-              }`}
+              className="px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 shadow-sm bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20 hover:shadow-emerald-600/30"
             >
               <ShoppingBag className="w-4 h-4" />
               <span>Comprar</span>

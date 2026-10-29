@@ -73,8 +73,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               <span className="font-serif text-base font-bold text-white block leading-tight">
                 Neuza Doces
               </span>
-              <span className="text-[10px] font-bold text-white block leading-tight mt-0.5">
-                distribuído por <span className="font-extrabold text-amber-300">IR Distribuidora</span>
+              <span className="text-[10px] font-bold text-white block leading-tight mt-0.5 uppercase">
+                DISTRIBUÍDO POR <span className="font-extrabold text-amber-300">IR DISTRIBUIDORA</span>
               </span>
             </div>
           </div>

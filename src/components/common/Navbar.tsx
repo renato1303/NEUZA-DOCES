@@ -45,8 +45,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPath }) => {
               alt="Neuza Doces"
               className="h-12 sm:h-15 w-auto object-contain group-hover:scale-105 transition-transform drop-shadow-sm"
             />
-            <span className="text-[10px] sm:text-[11px] font-bold text-white tracking-wide mt-0.5 whitespace-nowrap">
-              distribuído por <span className="font-extrabold text-amber-300">IR Distribuidora</span>
+            <span className="text-[10px] sm:text-[11px] font-bold text-white tracking-wide mt-0.5 whitespace-nowrap uppercase">
+              DISTRIBUÍDO POR <span className="font-extrabold text-amber-300">IR DISTRIBUIDORA</span>
             </span>
           </button>
 
