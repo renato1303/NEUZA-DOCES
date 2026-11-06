@@ -118,7 +118,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const base = existing
         ? {
             ...existing,
-            category_id: existing.category_id === 'cat-5' ? 'cat-1' : (existing.category_id || initialP.category_id),
+            name: initialP.name,
+            slug: initialP.slug,
+            description: initialP.description,
+            short_description: initialP.short_description,
+            category_id: initialP.category_id,
             image_url: initialP.image_url,
             gallery: initialP.gallery,
           }
@@ -170,9 +174,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       pix_key: loaded.pix_key || INITIAL_SETTINGS.pix_key,
     };
   });
-  const [cart, setCart] = useState<CartItem[]>(() =>
-    getStorage(STORAGE_KEYS.CART, [])
-  );
+  const [cart, setCart] = useState<CartItem[]>(() => {
+    const loadedCart = getStorage<CartItem[]>(STORAGE_KEYS.CART, []);
+    const removedIds = new Set([
+      'prod-01', 'prod-03', 'prod-05', 'prod-07', 'prod-09',
+      'prod-11', 'prod-13', 'prod-15', 'prod-18', 'prod-19', 'prod-21'
+    ]);
+    return loadedCart.filter((item) => !removedIds.has(item.product.id));
+  });
   const [currentUser, setCurrentUser] = useState<User | null>(() =>
     getStorage(STORAGE_KEYS.USER, INITIAL_USER)
   );

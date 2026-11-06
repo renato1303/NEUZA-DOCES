@@ -51,10 +51,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onNavigate })
         </div>
       </div>
 
-      {/* Content: Apenas Preço e Ações de Compra */}
-      <div className="p-4 sm:p-5 flex-1 flex flex-col justify-end">
+      {/* Content */}
+      <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between">
+        {/* Product Name */}
+        <div className="mb-3">
+          <h3 className="font-bold text-slate-900 text-base sm:text-lg group-hover:text-blue-950 transition-colors line-clamp-2 leading-snug">
+            {product.name}
+          </h3>
+        </div>
+
         {/* Format Selector: Pote vs Caixa */}
-        <div className="space-y-3">
+        <div className="space-y-3 mt-auto">
           <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs">
             <button
               type="button"
