@@ -50,6 +50,12 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ slug, onNa
   const currentImage = activeImage || product.image_url;
   const isOutOfStock = product.stock <= 0;
 
+  const isBombocado =
+    product.id === 'prod-bombocado' ||
+    product.slug.includes('bombocado') ||
+    product.name.toLowerCase().includes('bombocado');
+  const unitsInPote = isBombocado ? 18 : 20;
+
   // Maximum quantity selectable based on stock
   const unitsMultiplier = selectedFormat === 'caixa' ? product.units_per_box : 1;
   const maxAllowedQuantity = 99;
@@ -174,7 +180,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ slug, onNa
               </span>
               <span className="text-xs text-slate-500 font-semibold flex items-center gap-1">
                 <Package className="w-3.5 h-3.5 text-blue-900" />
-                {product.packaging} • {product.package_qty_info || '6 potes'}
+                CX 1X6 • 6 potes • Pote com {unitsInPote} unidades
               </span>
             </div>
 
@@ -216,7 +222,9 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ slug, onNa
                 <div className="mt-2 font-serif text-2xl font-bold text-blue-950">
                   {formatCurrency(product.price_unit)}
                 </div>
-                <p className="text-xs text-slate-500 mt-0.5">1 pote individual de {product.weight}</p>
+                <p className="text-xs font-semibold text-blue-900 mt-1">
+                  Pote com {unitsInPote} unidades • {product.weight}
+                </p>
               </div>
 
               {/* Option Caixa */}
@@ -241,8 +249,8 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ slug, onNa
                 <div className="mt-2 font-serif text-2xl font-bold text-blue-950">
                   {formatCurrency(product.price_box)}
                 </div>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Caixa fechada {product.packaging} ({product.units_per_box} potes)
+                <p className="text-xs font-semibold text-blue-900 mt-1">
+                  Caixa com 6 potes ({unitsInPote * 6} unidades no total)
                 </p>
               </div>
             </div>
@@ -275,7 +283,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ slug, onNa
 
               <div className="flex-1">
                 <span className="block text-xs text-slate-500 uppercase tracking-wider">
-                  Total desta seleção
+                  Total ({selectedFormat === 'caixa' ? 'Caixa com 6 potes' : `Pote com ${unitsInPote} unidades`})
                 </span>
                 <div className="font-serif text-2xl font-bold text-slate-900">
                   {formatCurrency(totalPrice)}

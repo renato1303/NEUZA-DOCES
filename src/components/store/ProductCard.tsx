@@ -15,6 +15,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onNavigate })
 
   const isOutOfStock = product.stock <= 0;
 
+  const isBombocado =
+    product.id === 'prod-bombocado' ||
+    product.slug.includes('bombocado') ||
+    product.name.toLowerCase().includes('bombocado');
+  const unitsInPote = isBombocado ? 18 : 20;
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
     addToCart(product, selectedFormat, 1);
@@ -77,6 +83,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onNavigate })
             >
               <span className="block text-[11px]">Preço por pote varejo</span>
               <span className="font-bold text-xs">({formatCurrency(product.price_unit)})</span>
+              <span className="block text-[10px] text-slate-500 font-normal mt-0.5">
+                Pote com {unitsInPote} unidades
+              </span>
             </button>
             <button
               type="button"
@@ -92,6 +101,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onNavigate })
             >
               <span className="block text-[11px]">Preço por caixa atacado</span>
               <span className="font-bold text-xs">({formatCurrency(product.price_box)})</span>
+              <span className="block text-[10px] text-slate-500 font-normal mt-0.5">
+                Caixa com 6 potes
+              </span>
             </button>
           </div>
 
@@ -101,9 +113,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onNavigate })
               <span className="text-[10px] text-slate-500 uppercase font-semibold block leading-none mb-1">
                 {selectedFormat === 'caixa' ? 'Preço por caixa atacado' : 'Preço por pote varejo'}
               </span>
-              <div className="text-xl sm:text-2xl font-bold font-serif text-slate-900">
+              <div className="text-xl sm:text-2xl font-bold font-serif text-slate-900 leading-none">
                 {formatCurrency(activePrice)}
               </div>
+              <span className="text-[11px] text-blue-900 font-medium block mt-1">
+                {selectedFormat === 'caixa'
+                  ? 'Caixa com 6 potes'
+                  : `Pote com ${unitsInPote} unidades`}
+              </span>
             </div>
 
             <button

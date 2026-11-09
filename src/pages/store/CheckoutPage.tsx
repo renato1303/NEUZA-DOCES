@@ -569,10 +569,18 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
                         <span className="font-semibold text-slate-900 line-clamp-1">
                           {item.product.name}
                         </span>
-                        <span className="text-slate-500 text-[11px]">
-                          {item.quantity}x {item.sale_type === 'caixa' ? 'Caixa' : 'Pote'} (
-                          {formatCurrency(itemPrice)})
-                        </span>
+                        {(() => {
+                          const isBombocado =
+                            item.product.id === 'prod-bombocado' ||
+                            item.product.slug.includes('bombocado') ||
+                            item.product.name.toLowerCase().includes('bombocado');
+                          const unitsInPote = isBombocado ? 18 : 20;
+                          return (
+                            <span className="text-slate-500 text-[11px] block">
+                              {item.quantity}x {item.sale_type === 'caixa' ? 'Caixa com 6 potes' : `Pote com ${unitsInPote} unidades`} ({formatCurrency(itemPrice)})
+                            </span>
+                          );
+                        })()}
                       </div>
                     </div>
                     <span className="font-bold text-slate-900">

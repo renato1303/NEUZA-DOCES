@@ -260,7 +260,9 @@ export const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({ orderId, onN
                     <h4 className="font-bold text-slate-900 text-sm">{item.product_name}</h4>
                     <div className="flex items-center gap-2 text-slate-500 mt-0.5">
                       <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-950 text-[10px] font-bold uppercase">
-                        {item.sale_type === 'caixa' ? 'Caixa (1X6)' : 'Pote Individual'}
+                        {item.sale_type === 'caixa'
+                          ? 'Caixa com 6 potes'
+                          : `Pote com ${item.product_name.toLowerCase().includes('bombocado') ? 18 : 20} unidades`}
                       </span>
                       <span>
                         {item.quantity} un x {formatCurrency(item.unit_price)}

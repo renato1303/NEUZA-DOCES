@@ -96,25 +96,38 @@ export const CartPage: React.FC<CartPageProps> = ({ onNavigate }) => {
                       />
                     </div>
                     <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-950">
-                          {item.sale_type === 'caixa' ? 'Caixa (1X6)' : 'Pote Individual'}
-                        </span>
-                        <span className="text-xs text-slate-500 font-medium">
-                          {item.product.weight}
-                        </span>
-                      </div>
-                      <h3
-                        onClick={() => onNavigate(`/produto/${item.product.slug}`)}
-                        className="font-serif font-bold text-slate-900 hover:text-blue-900 transition-colors cursor-pointer text-base"
-                      >
-                        {item.product.name}
-                      </h3>
-                      <p className="text-xs text-slate-500">
-                        {item.sale_type === 'caixa'
-                          ? `Contém ${item.product.units_per_box} potes de ${item.product.weight}`
-                          : `Preço unitário: ${formatCurrency(itemPrice)}`}
-                      </p>
+                      {(() => {
+                        const isBombocado =
+                          item.product.id === 'prod-bombocado' ||
+                          item.product.slug.includes('bombocado') ||
+                          item.product.name.toLowerCase().includes('bombocado');
+                        const unitsInPote = isBombocado ? 18 : 20;
+                        return (
+                          <>
+                            <div className="flex items-center gap-2">
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-950">
+                                {item.sale_type === 'caixa'
+                                  ? 'Caixa com 6 potes'
+                                  : `Pote com ${unitsInPote} unidades`}
+                              </span>
+                              <span className="text-xs text-slate-500 font-medium">
+                                {item.product.weight}
+                              </span>
+                            </div>
+                            <h3
+                              onClick={() => onNavigate(`/produto/${item.product.slug}`)}
+                              className="font-serif font-bold text-slate-900 hover:text-blue-900 transition-colors cursor-pointer text-base"
+                            >
+                              {item.product.name}
+                            </h3>
+                            <p className="text-xs text-slate-500">
+                              {item.sale_type === 'caixa'
+                                ? `Caixa com 6 potes (${unitsInPote * 6} unidades no total) • ${formatCurrency(itemPrice)}`
+                                : `Pote com ${unitsInPote} unidades • ${formatCurrency(itemPrice)}`}
+                            </p>
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
 
