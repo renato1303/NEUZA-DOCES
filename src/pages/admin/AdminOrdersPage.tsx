@@ -316,11 +316,13 @@ export const AdminOrdersPage: React.FC = () => {
                   >
                     <div className="flex items-center gap-3">
                       {item.image_url && (
-                        <img
-                          src={item.image_url}
-                          alt={item.product_name}
-                          className="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0"
-                        />
+                        <div className="w-10 h-10 rounded-lg bg-slate-50 border border-slate-200 p-0.5 flex items-center justify-center shrink-0">
+                          <img
+                            src={item.image_url}
+                            alt={item.product_name}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
                       )}
                       <div>
                         <span className="font-bold text-slate-900 block">{item.product_name}</span>

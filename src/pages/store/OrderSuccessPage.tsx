@@ -248,11 +248,13 @@ export const OrderSuccessPage: React.FC<OrderSuccessPageProps> = ({ orderId, onN
               >
                 <div className="flex items-center gap-3">
                   {item.image_url && (
-                    <img
-                      src={item.image_url}
-                      alt={item.product_name}
-                      className="w-12 h-12 rounded-lg object-cover border border-slate-200 shrink-0"
-                    />
+                    <div className="w-12 h-12 rounded-lg bg-slate-50 border border-slate-200 p-1 flex items-center justify-center shrink-0">
+                      <img
+                        src={item.image_url}
+                        alt={item.product_name}
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
                   )}
                   <div>
                     <h4 className="font-bold text-slate-900 text-sm">{item.product_name}</h4>

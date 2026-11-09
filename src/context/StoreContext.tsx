@@ -123,6 +123,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             description: initialP.description,
             short_description: initialP.short_description,
             category_id: initialP.category_id,
+            price_unit: initialP.price_unit,
+            price_box: initialP.price_box,
             image_url: initialP.image_url,
             gallery: initialP.gallery,
           }

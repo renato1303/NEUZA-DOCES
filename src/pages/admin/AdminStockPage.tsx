@@ -217,11 +217,13 @@ export const AdminStockPage: React.FC = () => {
                   <tr key={product.id} className="hover:bg-slate-50/80 transition-colors">
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
-                        <img
-                          src={product.image_url}
-                          alt={product.name}
-                          className="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0"
-                        />
+                        <div className="w-10 h-10 rounded-lg bg-slate-50 border border-slate-200 p-0.5 flex items-center justify-center shrink-0">
+                          <img
+                            src={product.image_url}
+                            alt={product.name}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
                         <div>
                           <span className="font-bold text-slate-900 block">{product.name}</span>
                           <span className="text-[11px] text-slate-400">

@@ -310,11 +310,13 @@ export const AdminProductsPage: React.FC<AdminProductsPageProps> = ({ onNavigate
                     {/* Product Name & Image */}
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
-                        <img
-                          src={p.image_url}
-                          alt={p.name}
-                          className="w-11 h-11 rounded-lg object-cover border border-slate-200 shrink-0"
-                        />
+                        <div className="w-11 h-11 rounded-lg bg-slate-50 border border-slate-200 p-0.5 flex items-center justify-center shrink-0">
+                          <img
+                            src={p.image_url}
+                            alt={p.name}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
                         <div>
                           <div className="flex items-center gap-1.5">
                             <span className="font-bold text-slate-900 text-sm">{p.name}</span>

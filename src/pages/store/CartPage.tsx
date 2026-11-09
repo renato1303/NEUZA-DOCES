@@ -88,11 +88,13 @@ export const CartPage: React.FC<CartPageProps> = ({ onNavigate }) => {
                 >
                   {/* Thumbnail & details */}
                   <div className="flex items-center gap-4 flex-1">
-                    <img
-                      src={item.product.image_url}
-                      alt={item.product.name}
-                      className="w-20 h-20 rounded-xl object-cover border border-slate-200 shrink-0"
-                    />
+                    <div className="w-20 h-20 rounded-xl bg-slate-50 border border-slate-200 p-1 flex items-center justify-center shrink-0">
+                      <img
+                        src={item.product.image_url}
+                        alt={item.product.name}
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-950">

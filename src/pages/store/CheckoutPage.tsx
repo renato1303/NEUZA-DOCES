@@ -558,11 +558,13 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
                     className="pt-2 flex items-center justify-between text-xs"
                   >
                     <div className="flex items-center gap-2.5">
-                      <img
-                        src={item.product.image_url}
-                        alt={item.product.name}
-                        className="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0"
-                      />
+                      <div className="w-10 h-10 rounded-lg bg-slate-50 border border-slate-200 p-0.5 flex items-center justify-center shrink-0">
+                        <img
+                          src={item.product.image_url}
+                          alt={item.product.name}
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
                       <div>
                         <span className="font-semibold text-slate-900 line-clamp-1">
                           {item.product.name}

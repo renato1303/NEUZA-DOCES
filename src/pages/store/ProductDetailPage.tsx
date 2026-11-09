@@ -104,11 +104,11 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ slug, onNa
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14">
         {/* Left Column: Image Gallery */}
         <div className="lg:col-span-6 space-y-4">
-          <div className="relative aspect-4/3 sm:aspect-1/1 bg-slate-100 rounded-3xl overflow-hidden border border-slate-200 shadow-md">
+          <div className="relative aspect-square max-h-[520px] bg-gradient-to-b from-slate-50/80 to-slate-100/60 rounded-3xl p-6 sm:p-10 flex items-center justify-center overflow-hidden border border-slate-200 shadow-md">
             <img
               src={currentImage}
               alt={product.name}
-              className="w-full h-full object-cover object-center"
+              className="w-full h-full object-contain object-center drop-shadow-sm transition-all duration-300"
             />
             {product.featured && (
               <div className="absolute top-4 left-4">
@@ -131,7 +131,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ slug, onNa
               <button
                 type="button"
                 onClick={() => setActiveImage(product.image_url)}
-                className={`w-20 h-20 rounded-xl overflow-hidden border-2 transition-all shrink-0 ${
+                className={`w-20 h-20 rounded-xl overflow-hidden border-2 p-1.5 bg-slate-50/80 flex items-center justify-center transition-all shrink-0 ${
                   currentImage === product.image_url
                     ? 'border-blue-900 ring-2 ring-blue-900/30'
                     : 'border-slate-200 hover:border-slate-400 opacity-75'
@@ -140,7 +140,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ slug, onNa
                 <img
                   src={product.image_url}
                   alt={product.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain object-center"
                 />
               </button>
               {product.gallery.map((img, idx) => (
@@ -148,7 +148,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ slug, onNa
                   key={idx}
                   type="button"
                   onClick={() => setActiveImage(img)}
-                  className={`w-20 h-20 rounded-xl overflow-hidden border-2 transition-all shrink-0 ${
+                  className={`w-20 h-20 rounded-xl overflow-hidden border-2 p-1.5 bg-slate-50/80 flex items-center justify-center transition-all shrink-0 ${
                     currentImage === img
                       ? 'border-blue-900 ring-2 ring-blue-900/30'
                       : 'border-slate-200 hover:border-slate-400 opacity-75'
@@ -157,7 +157,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ slug, onNa
                   <img
                     src={img}
                     alt={`${product.name} foto ${idx + 1}`}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain object-center"
                   />
                 </button>
               ))}

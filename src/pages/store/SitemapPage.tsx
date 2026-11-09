@@ -269,7 +269,7 @@ export const SitemapPage: React.FC<SitemapPageProps> = ({ onNavigate }) => {
                   <img
                     src={p.image_url}
                     alt={p.name}
-                    className="w-11 h-11 rounded-lg object-cover bg-slate-100 border border-slate-200 shrink-0 group-hover:scale-105 transition-transform"
+                    className="w-11 h-11 rounded-lg object-contain p-0.5 bg-slate-50 border border-slate-200 shrink-0 group-hover:scale-105 transition-transform"
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = '/logo.png';
                     }}

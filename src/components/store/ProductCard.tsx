@@ -35,16 +35,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onNavigate })
       className="group bg-white rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-xl hover:border-blue-400/60 transition-all duration-300 flex flex-col overflow-hidden cursor-pointer"
     >
       {/* Image container */}
-      <div className="relative h-60 bg-slate-100 overflow-hidden">
+      <div className="relative h-64 sm:h-72 bg-gradient-to-b from-slate-50/80 to-slate-100/60 p-5 sm:p-6 flex items-center justify-center overflow-hidden">
         <img
           src={product.image_url}
           alt={product.name}
-          className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+          className="w-full h-full object-contain object-center drop-shadow-xs group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
         />
 
         {/* Quick view hover icon */}
-        <div className="absolute inset-0 bg-[#091129]/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+        <div className="absolute inset-0 bg-[#091129]/15 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
           <span className="bg-white/95 backdrop-blur-xs text-slate-800 text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-md">
             <Eye className="w-3.5 h-3.5" /> Ver detalhes
           </span>
