@@ -61,7 +61,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onNavigate })
         </div>
 
         {/* Format Selector: Pote vs Caixa */}
-        <div className="space-y-3 mt-auto">
+        <div className="space-y-2 mt-auto">
           <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs">
             <button
               type="button"
@@ -69,13 +69,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onNavigate })
                 e.stopPropagation();
                 setSelectedFormat('pote');
               }}
-              className={`flex-1 py-1.5 px-2 rounded-lg font-medium transition-all text-center ${
+              className={`flex-1 py-1.5 px-2 rounded-lg font-medium transition-all text-center leading-tight ${
                 selectedFormat === 'pote'
                   ? 'bg-white text-blue-950 shadow-xs font-bold'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Pote ({formatCurrency(product.price_unit)})
+              <span className="block text-[11px]">Preço por pote varejo</span>
+              <span className="font-bold text-xs">({formatCurrency(product.price_unit)})</span>
             </button>
             <button
               type="button"
@@ -83,13 +84,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onNavigate })
                 e.stopPropagation();
                 setSelectedFormat('caixa');
               }}
-              className={`flex-1 py-1.5 px-2 rounded-lg font-medium transition-all text-center ${
+              className={`flex-1 py-1.5 px-2 rounded-lg font-medium transition-all text-center leading-tight ${
                 selectedFormat === 'caixa'
                   ? 'bg-white text-blue-950 shadow-xs font-bold'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Caixa ({formatCurrency(product.price_box)})
+              <span className="block text-[11px]">Preço por caixa atacado</span>
+              <span className="font-bold text-xs">({formatCurrency(product.price_box)})</span>
             </button>
           </div>
 
@@ -97,7 +99,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onNavigate })
           <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
             <div>
               <span className="text-[10px] text-slate-500 uppercase font-semibold block leading-none mb-1">
-                {selectedFormat === 'caixa' ? 'Preço da Caixa' : 'Preço do Pote'}
+                {selectedFormat === 'caixa' ? 'Preço por caixa atacado' : 'Preço por pote varejo'}
               </span>
               <div className="text-xl sm:text-2xl font-bold font-serif text-slate-900">
                 {formatCurrency(activePrice)}

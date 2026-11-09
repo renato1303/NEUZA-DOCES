@@ -204,7 +204,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ slug, onNa
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-sm text-slate-900">Venda por Pote</span>
+                  <span className="font-bold text-sm text-slate-900">Preço por pote varejo</span>
                   <input
                     type="radio"
                     name="format"
@@ -229,7 +229,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ slug, onNa
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-sm text-slate-900">Venda por Caixa</span>
+                  <span className="font-bold text-sm text-slate-900">Preço por caixa atacado</span>
                   <input
                     type="radio"
                     name="format"
