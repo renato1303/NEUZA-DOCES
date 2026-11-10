@@ -528,8 +528,9 @@ export const INITIAL_ORDERS: Order[] = [];
 
 export const INITIAL_SETTINGS: StoreSettings = {
   store_name: 'Neuza Doces',
-  logo: '',
-  phone: '',
+  logo: '/logo.png',
+  distribution_text: 'DISTRIBUÍDO POR IR DISTRIBUIDORA',
+  phone: '(15) 99157-6707',
   whatsapp: '(15) 99157-6707',
   email: 'contato@neuzadoces.com.br',
   zip_code: '18117-222',
@@ -548,6 +549,16 @@ export const INITIAL_SETTINGS: StoreSettings = {
   free_shipping_threshold: 0,
   flat_shipping_fee: 0,
   pix_key: 'renatoinacio2@gmail.com',
+
+  // Customizações do Site
+  announcement_bar_enabled: true,
+  announcement_bar_text: '🍬 Vendas no Atacado (caixas) e Varejo (potes). Entregamos para todo o Brasil!',
+  hero_badge: 'TRADIÇÃO ARTESANAL BRASILEIRA',
+  hero_title: 'Doces artesanais tradicionais com o sabor inconfundível da Neuza Doces.',
+  hero_subtitle: 'Receitas feitas em tachos com ingredientes selecionados. Potes avulsos e caixas fechadas no atacado para todo o Brasil.',
+  hero_cta_text: 'Ver Catálogo Completo',
+  about_text: 'Doces artesanais produzidos com carinho e tradição brasileira. Sabores que resgatam memórias afetivas e transformam qualquer momento em celebração.',
+  working_hours: 'Segunda a Sexta, das 08h às 18h',
 };
 
 export const INITIAL_USER: User = {

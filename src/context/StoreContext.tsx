@@ -793,22 +793,30 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   // Auth
-  const login = (email: string, _password?: string) => {
-    const cleanEmail = (email || '').trim().toLowerCase();
-    if (!cleanEmail) {
-      return { success: false, message: 'Informe um e-mail válido para acessar.' };
+  const login = (identifier: string, _password?: string) => {
+    const clean = (identifier || '').trim();
+    if (!clean) {
+      return { success: false, message: 'Informe o usuário para acessar.' };
     }
 
-    const userName = cleanEmail.includes('renato')
+    const userName = clean.toLowerCase() === 'master'
+      ? 'Master'
+      : clean.toLowerCase().includes('renato')
       ? 'Renato Inácio (Admin)'
-      : cleanEmail.includes('admin')
+      : clean.toLowerCase().includes('admin')
       ? 'Neuza Inácio (Admin)'
-      : 'Administrador';
+      : clean;
+
+    const userEmail = clean.toLowerCase() === 'master'
+      ? 'master@neuzadoces.com.br'
+      : clean.includes('@')
+      ? clean
+      : `${clean.toLowerCase()}@neuzadoces.com.br`;
 
     const user: User = {
       id: 'usr-' + Date.now(),
       name: userName,
-      email: cleanEmail,
+      email: userEmail,
       role: 'admin',
       created_at: new Date().toISOString(),
     };

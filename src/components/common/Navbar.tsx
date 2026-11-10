@@ -9,7 +9,7 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPath }) => {
-  const { cartTotalItems, cartSubtotal, categories } = useStore();
+  const { cartTotalItems, cartSubtotal, categories, settings } = useStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -30,8 +30,25 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPath }) => {
     { label: 'Todos os Produtos', path: '/produtos' },
   ];
 
+  const phoneDisplay = settings.whatsapp || settings.phone || '(15) 99157-6707';
+  const cleanPhone = phoneDisplay.replace(/\D/g, '');
+  const whatsappUrl = `https://wa.me/55${cleanPhone.replace(/^55/, '')}?text=${encodeURIComponent(`Olá, gostaria de tirar dúvidas sobre os produtos da ${settings.store_name || 'Neuza Doces'}`)}`;
+
+  const distText = settings.distribution_text || 'DISTRIBUÍDO POR IR DISTRIBUIDORA';
+  const isDefaultPrefix = /^DISTRIBU[IÍ]DO POR\s*/i.test(distText);
+  const distHighlight = isDefaultPrefix ? distText.replace(/^DISTRIBU[IÍ]DO POR\s*/i, '') : distText;
+
   return (
     <header className="sticky top-0 z-40 bg-[#091129] border-b border-blue-950 shadow-md">
+      {/* Top Announcement Bar (Configurable in Admin) */}
+      {settings.announcement_bar_enabled !== false && settings.announcement_bar_text && (
+        <div className="bg-[#d6bd2d] text-[#091129] py-1.5 px-4 text-center text-xs font-bold tracking-wide border-b border-amber-500/30">
+          <div className="max-w-7xl mx-auto flex items-center justify-center gap-2">
+            <span>{settings.announcement_bar_text}</span>
+          </div>
+        </div>
+      )}
+
       {/* Top Header Row */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20 sm:h-24 gap-4">
@@ -41,12 +58,18 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPath }) => {
             className="flex flex-col text-left group focus:outline-hidden py-1 shrink-0"
           >
             <img
-              src="/logo.png"
-              alt="Neuza Doces"
+              src={settings.logo || '/logo.png'}
+              alt={settings.store_name || 'Neuza Doces'}
               className="h-12 sm:h-15 w-auto object-contain group-hover:scale-105 transition-transform drop-shadow-sm"
             />
             <span className="text-[10px] sm:text-[11px] font-bold text-white tracking-wide mt-0.5 whitespace-nowrap uppercase">
-              DISTRIBUÍDO POR <span className="font-extrabold text-amber-300">IR DISTRIBUIDORA</span>
+              {isDefaultPrefix ? (
+                <>
+                  DISTRIBUÍDO POR <span className="font-extrabold text-amber-300">{distHighlight}</span>
+                </>
+              ) : (
+                <span className="font-extrabold text-amber-300">{distHighlight}</span>
+              )}
             </span>
           </button>
 
@@ -77,7 +100,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPath }) => {
           <div className="flex items-center space-x-2 sm:space-x-4 shrink-0">
             {/* Central de Atendimento (WhatsApp link) */}
             <a
-              href="https://wa.me/5515991576707?text=Olá,%20gostaria%20de%20tirar%20dúvidas%20sobre%20os%20doces%20da%20Neuza%20Doces"
+              href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="hidden lg:flex items-center gap-2 text-slate-200 hover:text-amber-300 text-xs font-medium px-3 py-2 rounded-lg bg-blue-950/50 hover:bg-blue-900/60 transition-colors border border-blue-900/50"
@@ -87,7 +110,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPath }) => {
               </svg>
               <div className="text-left">
                 <div className="text-[10px] text-slate-400 leading-none">Central de Atendimento</div>
-                <div className="font-bold text-slate-200 mt-0.5">(15) 99157-6707</div>
+                <div className="font-bold text-slate-200 mt-0.5">{phoneDisplay}</div>
               </div>
             </a>
 

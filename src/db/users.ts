@@ -42,6 +42,8 @@ export async function isAuthorizedAdmin(email: string): Promise<boolean> {
     
     // Default authorized admins and company domain
     if (
+      cleanEmail === 'master' ||
+      cleanEmail === 'master@neuzadoces.com.br' ||
       cleanEmail === 'renatoinacio2@gmail.com' ||
       cleanEmail === 'admin@neuzadoces.com.br' ||
       cleanEmail.endsWith('@neuzadoces.com.br')
@@ -53,6 +55,8 @@ export async function isAuthorizedAdmin(email: string): Promise<boolean> {
     console.error('Error checking authorized admin:', error);
     const cleanEmail = email.toLowerCase().trim();
     return (
+      cleanEmail === 'master' ||
+      cleanEmail === 'master@neuzadoces.com.br' ||
       cleanEmail === 'renatoinacio2@gmail.com' ||
       cleanEmail === 'admin@neuzadoces.com.br' ||
       cleanEmail.endsWith('@neuzadoces.com.br')
@@ -84,5 +88,41 @@ export async function getAuthorizedAdminsList() {
   } catch (error) {
     console.error('Error listing admins:', error);
     return [];
+  }
+}
+
+export async function createAdminUser(email: string, name: string) {
+  try {
+    const cleanEmail = email.toLowerCase().trim();
+    await db
+      .insert(authorizedAdmins)
+      .values({
+        email: cleanEmail,
+        name: name.trim(),
+        role: 'admin',
+        active: true,
+      })
+      .onConflictDoUpdate({
+        target: authorizedAdmins.email,
+        set: {
+          name: name.trim(),
+          active: true,
+        },
+      });
+
+    const uid = `user-${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    return await getOrCreateUser(uid, cleanEmail, name.trim());
+  } catch (error) {
+    console.error('Error in createAdminUser:', error);
+    throw new Error('Falha ao cadastrar usuário administrador no banco de dados.', { cause: error });
+  }
+}
+
+export async function deleteAdminUser(id: number) {
+  try {
+    await db.delete(authorizedAdmins).where(eq(authorizedAdmins.id, id));
+  } catch (error) {
+    console.error('Error in deleteAdminUser:', error);
+    throw new Error('Falha ao excluir usuário administrador.', { cause: error });
   }
 }

@@ -411,7 +411,8 @@ export async function getDbSettings(): Promise<StoreSettings> {
       return INITIAL_SETTINGS;
     }
 
-    return JSON.parse(records[0].settingsJson);
+    const parsed = JSON.parse(records[0].settingsJson);
+    return { ...INITIAL_SETTINGS, ...parsed };
   } catch (error) {
     console.error('Error in getDbSettings:', error);
     return INITIAL_SETTINGS;

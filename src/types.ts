@@ -140,6 +140,17 @@ export interface StoreSettings {
   pix_key: string;
   address?: string;
   cnpj?: string;
+
+  // Campos customizáveis do site (Liberdade total de alteração)
+  distribution_text?: string; // ex: "DISTRIBUÍDO POR IR DISTRIBUIDORA"
+  announcement_bar_enabled?: boolean;
+  announcement_bar_text?: string;
+  hero_badge?: string;
+  hero_title?: string;
+  hero_subtitle?: string;
+  hero_cta_text?: string;
+  about_text?: string;
+  working_hours?: string;
 }
 
 export type PeriodFilter =

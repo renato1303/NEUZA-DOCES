@@ -1,7 +1,14 @@
 import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import { requireAuth, AuthRequest } from './src/middleware/auth.ts';
-import { isAuthorizedAdmin, getAuthorizedAdminsList, getAdminByEmail, getOrCreateUser } from './src/db/users.ts';
+import {
+  isAuthorizedAdmin,
+  getAuthorizedAdminsList,
+  getAdminByEmail,
+  getOrCreateUser,
+  createAdminUser,
+  deleteAdminUser,
+} from './src/db/users.ts';
 import {
   getDbProducts,
   saveDbProduct,
@@ -28,50 +35,152 @@ app.use(express.json());
 // -------------------------------------------------------------------
 app.post('/api/admin/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const rawIdentifier = (
+      req.body.username ||
+      req.body.user ||
+      req.body.usuario ||
+      req.body.email ||
+      req.body.login ||
+      ''
+    ).trim();
+    const password = (req.body.password || req.body.senha || '').trim();
+
+    if (!rawIdentifier) {
+      return res.status(400).json({
+        success: false,
+        message: 'Por favor, informe o seu usuário.',
+      });
+    }
+
+    if (!password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Por favor, informe sua senha.',
+      });
+    }
+
+    // Acesso solicitado pelo cliente: Usuário "Master" e senha "Neuza2026$"
+    if (rawIdentifier.toLowerCase() === 'master') {
+      if (password !== 'Neuza2026$') {
+        return res.status(401).json({
+          success: false,
+          message: 'Senha incorreta para o usuário Master. A senha correta é "Neuza2026$".',
+        });
+      }
+
+      await getOrCreateUser('user-master', 'master@neuzadoces.com.br', 'Master');
+      return res.json({
+        success: true,
+        user: {
+          username: 'Master',
+          email: 'master@neuzadoces.com.br',
+          name: 'Master',
+          role: 'admin',
+        },
+      });
+    }
+
+    // Suporte para logins com e-mails cadastrados
+    const cleanEmail = rawIdentifier.toLowerCase();
+    const authorized = await isAuthorizedAdmin(cleanEmail);
+    if (authorized) {
+      const adminRecord = await getAdminByEmail(cleanEmail);
+      const adminName =
+        adminRecord?.name ||
+        (cleanEmail === 'renatoinacio2@gmail.com' ? 'Renato Inácio' : 'Administrador Neuza Doces');
+
+      await getOrCreateUser(`user-${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`, cleanEmail, adminName);
+
+      return res.json({
+        success: true,
+        user: {
+          username: cleanEmail,
+          email: cleanEmail,
+          name: adminName,
+          role: adminRecord?.role || 'admin',
+        },
+      });
+    }
+
+    return res.status(401).json({
+      success: false,
+      message: 'Usuário não autorizado. O usuário é "Master" e a senha é "Neuza2026$".',
+    });
+  } catch (err: any) {
+    console.error('Error in /api/admin/login:', err);
+    res.status(500).json({ success: false, message: err.message || 'Erro no servidor ao autenticar.' });
+  }
+});
+
+// Criar novo usuário administrador diretamente
+app.post('/api/admin/register', async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
     const cleanEmail = (email || '').trim().toLowerCase();
+    const cleanName = (name || '').trim();
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!cleanEmail || !emailRegex.test(cleanEmail)) {
       return res.status(400).json({
         success: false,
-        message: 'Por favor, insira um e-mail válido (ex: seu.nome@dominio.com).',
+        message: 'Por favor, informe um endereço de e-mail válido.',
       });
     }
 
-    if (!password || !password.trim()) {
+    if (!cleanName) {
       return res.status(400).json({
         success: false,
-        message: 'Por favor, insira sua senha.',
+        message: 'Por favor, informe o nome do usuário.',
       });
     }
 
-    const authorized = await isAuthorizedAdmin(cleanEmail);
-    if (!authorized) {
-      return res.status(403).json({
+    if (!password || password.trim().length < 4) {
+      return res.status(400).json({
         success: false,
-        message: 'E-mail não autorizado no banco de dados. Apenas administradores cadastrados podem acessar.',
+        message: 'A senha deve conter no mínimo 4 caracteres.',
       });
     }
 
-    const adminRecord = await getAdminByEmail(cleanEmail);
-    const adminName =
-      adminRecord?.name ||
-      (cleanEmail === 'renatoinacio2@gmail.com' ? 'Renato Inácio' : 'Administrador Neuza Doces');
+    const newUser = await createAdminUser(cleanEmail, cleanName);
 
-    await getOrCreateUser(`user-${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`, cleanEmail, adminName);
-
-    res.json({
+    res.status(201).json({
       success: true,
+      message: 'Usuário administrador cadastrado com sucesso!',
       user: {
         email: cleanEmail,
-        name: adminName,
-        role: adminRecord?.role || 'admin',
+        name: cleanName,
+        role: 'admin',
       },
     });
   } catch (err: any) {
-    console.error('Error in /api/admin/login:', err);
-    res.status(500).json({ success: false, message: err.message || 'Erro no servidor ao autenticar.' });
+    console.error('Error in /api/admin/register:', err);
+    res.status(500).json({ success: false, message: err.message || 'Erro ao registrar usuário administrador.' });
+  }
+});
+
+// Listar administradores cadastrados
+app.get('/api/admin/users', async (_req, res) => {
+  try {
+    const admins = await getAuthorizedAdminsList();
+    res.json(admins);
+  } catch (err: any) {
+    console.error('Error in GET /api/admin/users:', err);
+    res.status(500).json({ error: 'Erro ao listar administradores.' });
+  }
+});
+
+// Excluir administrador cadastrado
+app.delete('/api/admin/users/:id', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'ID inválido.' });
+    }
+    await deleteAdminUser(id);
+    res.json({ success: true, message: 'Administrador removido.' });
+  } catch (err: any) {
+    console.error('Error in DELETE /api/admin/users:', err);
+    res.status(500).json({ error: 'Erro ao remover administrador.' });
   }
 });
 

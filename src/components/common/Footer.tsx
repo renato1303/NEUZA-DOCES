@@ -17,17 +17,17 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           <div className="space-y-4">
             <div className="flex flex-col gap-1.5">
               <img
-                src="/logo.png"
-                alt="Neuza Doces"
+                src={settings.logo || '/logo.png'}
+                alt={settings.store_name || 'Neuza Doces'}
                 className="h-14 sm:h-18 w-auto object-contain drop-shadow-sm self-start"
               />
               <span className="text-xs font-bold text-white tracking-wide uppercase">
-                DISTRIBUÍDO POR <span className="font-extrabold text-amber-300">IR DISTRIBUIDORA</span>
+                {settings.distribution_text || 'DISTRIBUÍDO POR IR DISTRIBUIDORA'}
               </span>
             </div>
             <p className="text-sm text-slate-400 leading-relaxed">
-              Doces artesanais produzidos com carinho e tradição brasileira. Sabores que resgatam
-              memórias afetivas e transformam qualquer momento em celebração.
+              {settings.about_text ||
+                'Doces artesanais produzidos com carinho e tradição brasileira. Sabores que resgatam memórias afetivas e transformam qualquer momento em celebração.'}
             </p>
             <div className="pt-2 text-xs text-amber-300/90 font-medium">
               Vendas no atacado (caixas fechadas) e no varejo (potes avulsos).
@@ -113,7 +113,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               </li>
               <li className="flex items-center gap-2.5">
                 <Clock className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>Seg a Sex: 07h às 17h • Sáb: 08h às 12h</span>
+                <span>{settings.working_hours || 'Seg a Sex: 07h às 17h • Sáb: 08h às 12h'}</span>
               </li>
             </ul>
           </div>
@@ -124,7 +124,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             <div className="bg-[#0b1638] p-3.5 rounded-xl border border-blue-900/60 text-xs text-slate-300 space-y-2 shadow-inner">
               <div className="font-semibold text-amber-300 flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-amber-400" />
-                IR Distribuidora
+                {settings.distribution_text ? settings.distribution_text.replace(/^DISTRIBU[IÍ]DO POR\s*/i, '') : 'IR Distribuidora'}
               </div>
               <p className="text-slate-400">
                 Distribuição e comercialização oficial dos doces artesanais Neuza. Vendas no atacado e varejo para todo o Brasil.
@@ -139,7 +139,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
         </div>
 
         <div className="mt-12 pt-6 border-t border-blue-950 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
-          <p>© {new Date().getFullYear()} Neuza Doces. Todos os direitos reservados. CNPJ 18.492.301/0001-44</p>
+          <p>© {new Date().getFullYear()} {settings.store_name || 'Neuza Doces'}. Todos os direitos reservados.{settings.cnpj ? ` CNPJ ${settings.cnpj}` : ''}</p>
           <div className="flex items-center gap-4 text-slate-400">
             <button
               id="footer-bottom-area-restrita-btn"
