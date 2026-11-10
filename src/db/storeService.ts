@@ -412,6 +412,9 @@ export async function getDbSettings(): Promise<StoreSettings> {
     }
 
     const parsed = JSON.parse(records[0].settingsJson);
+    if (!parsed.cnpj || parsed.cnpj.includes('18.492.301')) {
+      parsed.cnpj = INITIAL_SETTINGS.cnpj;
+    }
     return { ...INITIAL_SETTINGS, ...parsed };
   } catch (error) {
     console.error('Error in getDbSettings:', error);

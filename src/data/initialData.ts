@@ -540,7 +540,7 @@ export const INITIAL_SETTINGS: StoreSettings = {
   city: 'Votorantim',
   state: 'SP',
   address: 'Rua Pastor Carlos de Assumpção Mena, 102 - Parque Jataí, Votorantim - SP, 18117-222',
-  cnpj: '18.492.301/0001-44',
+  cnpj: '50.275.661/0001-06',
   instagram: '@docesneuzaa',
   facebook: 'neuzadocesartesanais',
   tiktok: '@neuzadoces',

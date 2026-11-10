@@ -42,9 +42,12 @@ export const AdminSettingsPage: React.FC = () => {
     settings.distribution_text || 'DISTRIBUÍDO POR IR DISTRIBUIDORA'
   );
   const [logo, setLogo] = useState(settings.logo || '/logo.png');
-  const [cnpj, setCnpj] = useState(settings.cnpj || '18.492.301/0001-44');
+  const [cnpj, setCnpj] = useState(
+    settings.cnpj && !settings.cnpj.includes('18.492.301')
+      ? settings.cnpj
+      : '50.275.661/0001-06'
+  );
   const [aboutText, setAboutText] = useState(
-    settings.about_text ||
       'Doces artesanais produzidos com carinho e tradição brasileira. Sabores que resgatam memórias afetivas e transformam qualquer momento em celebração.'
   );
 

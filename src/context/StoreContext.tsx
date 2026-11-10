@@ -17,7 +17,6 @@ import {
   INITIAL_CUSTOMERS,
   INITIAL_ORDERS,
   INITIAL_SETTINGS,
-  INITIAL_USER,
   INITIAL_NOTIFICATIONS,
 } from '../data/initialData';
 import { slugify } from '../utils/formatters';
@@ -161,9 +160,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       loaded.street.includes('Palmeiras Artesanais') ||
       loaded.city === 'Valinhos' ||
       loaded.zip_code === '13270-000';
+    const hasOldDefaultCnpj =
+      !loaded.cnpj ||
+      loaded.cnpj.includes('18.492.301') ||
+      loaded.cnpj === '18.492.301/0001-44';
     return {
       ...INITIAL_SETTINGS,
       ...loaded,
+      cnpj: hasOldDefaultCnpj ? INITIAL_SETTINGS.cnpj : loaded.cnpj,
       street: hasOldDefaultAddress ? INITIAL_SETTINGS.street : loaded.street,
       number: hasOldDefaultAddress ? INITIAL_SETTINGS.number : loaded.number,
       neighborhood: hasOldDefaultAddress ? INITIAL_SETTINGS.neighborhood : loaded.neighborhood,
@@ -184,9 +188,29 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     ]);
     return loadedCart.filter((item) => !removedIds.has(item.product.id));
   });
-  const [currentUser, setCurrentUser] = useState<User | null>(() =>
-    getStorage(STORAGE_KEYS.USER, INITIAL_USER)
-  );
+
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    try {
+      // Remover qualquer usuário mock legado do localStorage
+      const legacy = localStorage.getItem(STORAGE_KEYS.USER);
+      if (legacy && (legacy.includes('usr-admin-1') || legacy.includes('admin@neuzadoces.com.br'))) {
+        localStorage.removeItem(STORAGE_KEYS.USER);
+      }
+
+      // Sessão administrativa estrita: só existe se o usuário tiver feito login explicitamente nesta sessão
+      const session = sessionStorage.getItem('neuza_admin_auth');
+      if (session) {
+        const parsed = JSON.parse(session);
+        if (parsed && parsed.role === 'admin' && parsed.id !== 'usr-admin-1') {
+          return parsed;
+        }
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  });
+
   const [notifications, setNotifications] = useState<AdminNotification[]>(() =>
     getStorage(STORAGE_KEYS.NOTIFICATIONS, INITIAL_NOTIFICATIONS)
   );
@@ -219,7 +243,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           setOrders(ordRes.value);
         }
         if (setRes.status === 'fulfilled' && setRes.value && typeof setRes.value === 'object') {
-          setSettings((prev) => ({ ...prev, ...setRes.value }));
+          const val = setRes.value;
+          const isOldCnpj = !val.cnpj || val.cnpj.includes('18.492.301');
+          setSettings((prev) => ({
+            ...prev,
+            ...val,
+            cnpj: isOldCnpj ? INITIAL_SETTINGS.cnpj : val.cnpj,
+          }));
         }
       } catch (err) {
         console.warn('Database load warning:', err);
@@ -258,7 +288,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [cart]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser));
+    if (currentUser) {
+      sessionStorage.setItem('neuza_admin_auth', JSON.stringify(currentUser));
+    } else {
+      sessionStorage.removeItem('neuza_admin_auth');
+      localStorage.removeItem(STORAGE_KEYS.USER);
+    }
   }, [currentUser]);
 
   useEffect(() => {
@@ -820,12 +855,19 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       role: 'admin',
       created_at: new Date().toISOString(),
     };
+    try {
+      sessionStorage.setItem('neuza_admin_auth', JSON.stringify(user));
+    } catch {
+      // ignore
+    }
     setCurrentUser(user);
     return { success: true };
   };
 
   const logout = () => {
     setCurrentUser(null);
+    sessionStorage.removeItem('neuza_admin_auth');
+    localStorage.removeItem(STORAGE_KEYS.USER);
   };
 
   const isAuthenticated = Boolean(currentUser);

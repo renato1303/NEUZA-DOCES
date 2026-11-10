@@ -370,7 +370,7 @@ export const SitemapPage: React.FC<SitemapPageProps> = ({ onNavigate }) => {
               <ShieldCheck className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
               <div>
                 <strong className="block text-slate-800 font-semibold">Registro & Distribuição</strong>
-                <span>CNPJ: 18.492.301/0001-44</span>
+                <span>CNPJ: {settings.cnpj && !settings.cnpj.includes('18.492.301') ? settings.cnpj : '50.275.661/0001-06'}</span>
                 <br />
                 <span className="text-slate-500">Distribuição Oficial: <strong>IR Distribuidora</strong></span>
               </div>
