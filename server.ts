@@ -64,7 +64,7 @@ app.post('/api/admin/login', async (req, res) => {
       if (password !== 'Neuza2026$') {
         return res.status(401).json({
           success: false,
-          message: 'Senha incorreta para o usuário Master. A senha correta é "Neuza2026$".',
+          message: 'Usuário ou senha incorretos.',
         });
       }
 
@@ -104,7 +104,7 @@ app.post('/api/admin/login', async (req, res) => {
 
     return res.status(401).json({
       success: false,
-      message: 'Usuário não autorizado. O usuário é "Master" e a senha é "Neuza2026$".',
+      message: 'Usuário ou senha incorretos.',
     });
   } catch (err: any) {
     console.error('Error in /api/admin/login:', err);
