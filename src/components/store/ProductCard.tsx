@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingBag, Eye } from 'lucide-react';
+import { ShoppingBag, Eye, Star } from 'lucide-react';
 import { Product, SaleType } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 import { useStore } from '../../context/StoreContext';
@@ -7,19 +7,24 @@ import { useStore } from '../../context/StoreContext';
 interface ProductCardProps {
   product: Product;
   onNavigate: (path: string) => void;
+  showFeaturedBadge?: boolean;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product, onNavigate }) => {
+export const ProductCard: React.FC<ProductCardProps> = ({
+  product,
+  onNavigate,
+  showFeaturedBadge = false,
+}) => {
   const { addToCart } = useStore();
   const [selectedFormat, setSelectedFormat] = useState<SaleType>('pote');
-
-  const isOutOfStock = product.stock <= 0;
 
   const isBombocado =
     product.id === 'prod-bombocado' ||
     product.slug.includes('bombocado') ||
     product.name.toLowerCase().includes('bombocado');
-  const unitsInPote = isBombocado ? 18 : 20;
+  const defaultUnits = isBombocado ? '18 unidades' : '20 unidades';
+  const poteInfoText = `Pote com ${product.package_qty_info || defaultUnits}`;
+  const caixaInfoText = `Caixa com ${product.units_per_box || 6} potes`;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -42,6 +47,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onNavigate })
     >
       {/* Image container */}
       <div className="relative h-64 sm:h-72 bg-gradient-to-b from-slate-50/80 to-slate-100/60 p-5 sm:p-6 flex items-center justify-center overflow-hidden">
+        {showFeaturedBadge && product.featured && (
+          <div className="absolute top-3 left-3 z-10 inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#d6bd2d] text-[#091129] text-[10px] font-bold uppercase tracking-wider shadow-xs">
+            <Star className="w-3 h-3 fill-[#091129]" />
+            <span>Mais Vendido</span>
+          </div>
+        )}
+
         <img
           src={product.image_url}
           alt={product.name}
@@ -84,7 +96,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onNavigate })
               <span className="block text-[11px]">Preço por pote varejo</span>
               <span className="font-bold text-xs">({formatCurrency(product.price_unit)})</span>
               <span className="block text-[10px] text-slate-500 font-normal mt-0.5">
-                Pote com {unitsInPote} unidades
+                {poteInfoText}
               </span>
             </button>
             <button
@@ -102,7 +114,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onNavigate })
               <span className="block text-[11px]">Preço por caixa atacado</span>
               <span className="font-bold text-xs">({formatCurrency(product.price_box)})</span>
               <span className="block text-[10px] text-slate-500 font-normal mt-0.5">
-                Caixa com 6 potes
+                {caixaInfoText}
               </span>
             </button>
           </div>
@@ -117,9 +129,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onNavigate })
                 {formatCurrency(activePrice)}
               </div>
               <span className="text-[11px] text-blue-900 font-medium block mt-1">
-                {selectedFormat === 'caixa'
-                  ? 'Caixa com 6 potes'
-                  : `Pote com ${unitsInPote} unidades`}
+                {selectedFormat === 'caixa' ? caixaInfoText : poteInfoText}
               </span>
             </div>
 

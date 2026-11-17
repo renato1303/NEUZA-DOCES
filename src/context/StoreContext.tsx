@@ -38,6 +38,7 @@ interface StoreContextType {
   deleteProduct: (id: string) => void;
   duplicateProduct: (id: string) => void;
   toggleProductActive: (id: string) => void;
+  toggleProductFeatured: (id: string) => void;
   updateProductStock: (id: string, newStock: number) => void;
   zeroAllProductStocks: () => void;
 
@@ -111,36 +112,24 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [products, setProducts] = useState<Product[]>(() => {
     const loaded = getStorage<Product[]>(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS);
     const hasInventoryZeroed = localStorage.getItem('neuza_inventory_zeroed_2026');
-    // Always guarantee real local photos (/1.jpeg to /22.jpeg) are applied and stocks zeroed for inventory
-    const synced = INITIAL_PRODUCTS.map((initialP) => {
-      const existing = loaded.find((p) => p.id === initialP.id);
-      const base = existing
-        ? {
-            ...existing,
-            name: initialP.name,
-            slug: initialP.slug,
-            description: initialP.description,
-            short_description: initialP.short_description,
-            category_id: initialP.category_id,
-            price_unit: initialP.price_unit,
-            price_box: initialP.price_box,
-            image_url: initialP.image_url,
-            gallery: initialP.gallery,
-          }
-        : initialP;
 
-      if (!hasInventoryZeroed) {
-        return { ...base, stock: 0 };
-      }
-      return base;
-    });
-
-    if (!hasInventoryZeroed) {
-      localStorage.setItem('neuza_inventory_zeroed_2026', 'true');
-      localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(synced));
+    if (!Array.isArray(loaded) || loaded.length === 0) {
+      return INITIAL_PRODUCTS;
     }
 
-    return synced;
+    // Preserva edições feitas pelo administrador (nome, preços, destaque, fotos) e produtos criados manualmente
+    const loadedIds = new Set(loaded.map((p) => p.id));
+    const missingInitials = INITIAL_PRODUCTS.filter((ip) => !loadedIds.has(ip.id));
+    const combined = [...loaded, ...missingInitials];
+
+    if (!hasInventoryZeroed) {
+      const zeroed = combined.map((p) => ({ ...p, stock: 0 }));
+      localStorage.setItem('neuza_inventory_zeroed_2026', 'true');
+      localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(zeroed));
+      return zeroed;
+    }
+
+    return combined;
   });
   const [categories, setCategories] = useState<Category[]>(() => {
     const loaded = getStorage<Category[]>(STORAGE_KEYS.CATEGORIES, INITIAL_CATEGORIES);
@@ -387,6 +376,25 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ active: newActive }),
+    }).catch(console.error);
+  };
+
+  const toggleProductFeatured = (id: string) => {
+    const target = products.find((p) => p.id === id);
+    if (!target) return;
+    const newFeatured = !target.featured;
+
+    setProducts((prev) =>
+      prev.map((p) =>
+        p.id === id ? { ...p, featured: newFeatured, updated_at: new Date().toISOString() } : p
+      )
+    );
+
+    // Persist to PostgreSQL database
+    fetch(`/api/products/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ featured: newFeatured }),
     }).catch(console.error);
   };
 
@@ -917,6 +925,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         deleteProduct,
         duplicateProduct,
         toggleProductActive,
+        toggleProductFeatured,
         updateProductStock,
         zeroAllProductStocks,
         addCategory,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Star } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
 import { ProductCard } from '../../components/store/ProductCard';
 
@@ -7,12 +7,32 @@ interface HomePageProps {
   onNavigate: (path: string) => void;
 }
 
+const BEST_SELLER_PRIORITY = [
+  'prod-pacoca-caseira',
+  'prod-ab',
+  'prod-16',
+  'prod-pe-de-moca',
+  'prod-crocante',
+  'prod-04',
+];
+
 export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   const { products, categories } = useStore();
 
   const activeProducts = products.filter((p) => p.active);
-  const featuredProducts = activeProducts.filter((p) => p.featured);
-  const pacocasProducts = activeProducts.filter((p) => p.category_id === 'cat-3').slice(0, 4);
+
+  const featuredProducts = activeProducts
+    .filter((p) => p.featured)
+    .sort((a, b) => {
+      const idxA = BEST_SELLER_PRIORITY.indexOf(a.id);
+      const idxB = BEST_SELLER_PRIORITY.indexOf(b.id);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return a.name.localeCompare(b.name);
+    });
+
+  const otherProducts = activeProducts.filter((p) => !p.featured);
 
   const categoryImages: Record<string, string> = {
     'cat-1': '/doces tradicionais.jpg',
@@ -23,37 +43,88 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
     'cocadas-doces-de-leite': '/cocada.webp',
   };
 
+  const featuredGridCols =
+    featuredProducts.length > 0 && featuredProducts.length % 3 === 0 && featuredProducts.length % 4 !== 0
+      ? 'lg:grid-cols-3'
+      : 'lg:grid-cols-4';
+
   return (
-    <div className="space-y-16 pb-20 pt-8 sm:pt-12">
-      {/* Featured Products */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="pb-20 pt-8 sm:pt-12">
+      {/* Section 1: Featured Products (Os Mais Vendidos) */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-14">
         <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-8 gap-4">
-          <div>
+          <div className="space-y-1.5">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#d6bd2d]/20 border border-[#d6bd2d]/50 text-[#091129] text-[11px] font-bold uppercase tracking-wider">
+              <Star className="w-3.5 h-3.5 text-amber-600 fill-amber-500" />
+              <span>Os Mais Vendidos</span>
+            </div>
             <h2 className="font-serif text-3xl sm:text-4xl font-bold text-slate-900">
               Produtos em Destaque
             </h2>
-            <p className="text-sm text-slate-600 mt-1">
-              Nossos doces mais vendidos com preços especiais para atacado e varejo.
+            <p className="text-sm text-slate-600">
+              Os doces campeões de vendas da Neuza Doces com preços especiais para atacado e varejo.
             </p>
           </div>
           <button
             onClick={() => onNavigate('/produtos')}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#091129] hover:bg-[#15234f] text-white text-xs font-semibold transition-colors shadow-sm"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#091129] hover:bg-[#15234f] text-white text-xs font-semibold transition-colors shadow-sm shrink-0 cursor-pointer"
           >
             <span>Ver catálogo completo ({activeProducts.length})</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featuredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} onNavigate={onNavigate} />
-          ))}
-        </div>
+        {featuredProducts.length > 0 ? (
+          <div className={`grid grid-cols-1 sm:grid-cols-2 ${featuredGridCols} gap-6`}>
+            {featuredProducts.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onNavigate={onNavigate}
+                showFeaturedBadge
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-sm text-slate-500">
+            Nenhum produto em destaque selecionado no momento.
+          </div>
+        )}
       </section>
 
-      {/* Category Selector (Escolha por Categoria) */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+      {/* Visual Separator + Section 2: Outros Produtos do Catálogo */}
+      {otherProducts.length > 0 && (
+        <section className="border-t border-slate-200/90 bg-white/75 py-14">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-8 gap-4">
+              <div>
+                <h2 className="font-serif text-2xl sm:text-3xl font-bold text-slate-900">
+                  Outros Produtos do Catálogo
+                </h2>
+                <p className="text-sm text-slate-600 mt-1">
+                  Explore toda a nossa variedade artesanal produzida no tacho com receita tradicional.
+                </p>
+              </div>
+              <button
+                onClick={() => onNavigate('/produtos')}
+                className="text-xs font-semibold text-blue-900 hover:underline flex items-center gap-1 shrink-0 cursor-pointer"
+              >
+                <span>Ver todos no catálogo</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {otherProducts.map((product) => (
+                <ProductCard key={product.id} product={product} onNavigate={onNavigate} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Section 3: Category Selector (Escolha por Categoria) */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 border-t border-slate-200/70">
         <div className="text-center space-y-2 mb-8">
           <h2 className="font-serif text-2xl sm:text-3xl font-bold text-slate-900">
             Escolha por Categoria
@@ -64,7 +135,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 justify-items-center max-w-4xl mx-auto">
-          {categories.filter(c => c.active).map((cat) => {
+          {categories.filter((c) => c.active).map((cat) => {
             const imgUrl = categoryImages[cat.id] || categoryImages[cat.slug] || '/doces tradicionais.jpg';
             return (
               <div
@@ -89,28 +160,6 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
           })}
         </div>
       </section>
-
-      {/* Selected Paçocas & Amendoim Showcase */}
-      {pacocasProducts.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="font-serif text-2xl font-bold text-slate-900">
-              Mais Pedidos: Linha Amendoim & Paçocas
-            </h3>
-            <button
-              onClick={() => onNavigate('/categoria/pacocas-amendoim')}
-              className="text-xs font-semibold text-blue-900 hover:underline"
-            >
-              Ver todos da categoria →
-            </button>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {pacocasProducts.map((product) => (
-              <ProductCard key={product.id} product={product} onNavigate={onNavigate} />
-            ))}
-          </div>
-        </section>
-      )}
     </div>
   );
 };

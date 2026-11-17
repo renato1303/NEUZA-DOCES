@@ -78,7 +78,7 @@ export const AdminSettingsPage: React.FC = () => {
   const [phone, setPhone] = useState(settings.phone || '');
   const [email, setEmail] = useState(settings.email || 'contato@neuzadoces.com.br');
   const [workingHours, setWorkingHours] = useState(
-    settings.working_hours || 'Seg a Sex: 07h às 17h • Sáb: 08h às 12h'
+    settings.working_hours || ''
   );
   const [instagram, setInstagram] = useState(settings.instagram || '@docesneuzaa');
   const [facebook, setFacebook] = useState(settings.facebook || 'neuzadocesartesanais');
@@ -653,13 +653,13 @@ export const AdminSettingsPage: React.FC = () => {
                 {/* Horário de Atendimento */}
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">
-                    Horário de Atendimento da Fábrica
+                    Observação de Atendimento (Opcional)
                   </label>
                   <input
                     type="text"
                     value={workingHours}
                     onChange={(e) => setWorkingHours(e.target.value)}
-                    placeholder="Ex: Seg a Sex: 07h às 17h • Sáb: 08h às 12h"
+                    placeholder="Opcional (não exibido no rodapé público)"
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 outline-hidden"
                   />
                 </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPin, Phone, Mail, Clock, Heart, ShieldCheck, Lock } from 'lucide-react';
+import { MapPin, Phone, Mail, Heart, ShieldCheck, Lock } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
 
 interface FooterProps {
@@ -110,10 +110,6 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               <li className="flex items-center gap-2.5">
                 <Mail className="w-4 h-4 text-amber-400 shrink-0" />
                 <span>{settings.email}</span>
-              </li>
-              <li className="flex items-center gap-2.5">
-                <Clock className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>{settings.working_hours || 'Seg a Sex: 07h às 17h • Sáb: 08h às 12h'}</span>
               </li>
             </ul>
           </div>

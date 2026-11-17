@@ -15,6 +15,7 @@ import {
   Upload,
   Image as ImageIcon,
   CheckCircle2,
+  Star,
 } from 'lucide-react';
 import { useStore } from '../../context/StoreContext';
 import { Product } from '../../types';
@@ -56,6 +57,7 @@ export const AdminProductsPage: React.FC<AdminProductsPageProps> = ({ onNavigate
     updateProduct,
     deleteProduct,
     toggleProductActive,
+    toggleProductFeatured,
     updateProductStock,
     zeroAllProductStocks,
   } = useStore();
@@ -63,6 +65,7 @@ export const AdminProductsPage: React.FC<AdminProductsPageProps> = ({ onNavigate
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterStock, setFilterStock] = useState<'all' | 'low' | 'out'>('all');
+  const [filterFeatured, setFilterFeatured] = useState<'all' | 'featured'>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -108,9 +111,12 @@ export const AdminProductsPage: React.FC<AdminProductsPageProps> = ({ onNavigate
       if (filterStock === 'out' && p.stock > 0) {
         return false;
       }
+      if (filterFeatured === 'featured' && !p.featured) {
+        return false;
+      }
       return true;
     });
-  }, [products, search, filterCategory, filterStock]);
+  }, [products, search, filterCategory, filterStock, filterFeatured]);
 
   const handleOpenAddModal = () => {
     setEditingProduct(null);
@@ -326,46 +332,72 @@ export const AdminProductsPage: React.FC<AdminProductsPageProps> = ({ onNavigate
       )}
 
       {/* Filter Toolbar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {/* Search */}
-        <div className="relative">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
-            type="text"
-            placeholder="Buscar por nome do doce..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 outline-hidden"
-          />
-        </div>
+      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+          {/* Search */}
+          <div className="relative">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Buscar por nome do doce..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 outline-hidden"
+            />
+          </div>
 
-        {/* Category filter */}
-        <div>
-          <select
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 outline-hidden bg-white"
-          >
-            <option value="all">Todas as Categorias ({products.length})</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name} ({products.filter((p) => p.category_id === c.id).length})
+          {/* Category filter */}
+          <div>
+            <select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 outline-hidden bg-white"
+            >
+              <option value="all">Todas as Categorias ({products.length})</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name} ({products.filter((p) => p.category_id === c.id).length})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Stock filter */}
+          <div>
+            <select
+              value={filterStock}
+              onChange={(e) => setFilterStock(e.target.value as any)}
+              className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 outline-hidden bg-white"
+            >
+              <option value="all">Todos os status de estoque</option>
+              <option value="low">Estoque Baixo (&lt; mínimo)</option>
+              <option value="out">Esgotado (0 potes)</option>
+            </select>
+          </div>
+
+          {/* Featured / Best sellers filter */}
+          <div>
+            <select
+              value={filterFeatured}
+              onChange={(e) => setFilterFeatured(e.target.value as 'all' | 'featured')}
+              className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 outline-hidden bg-white"
+            >
+              <option value="all">Todos os produtos ({products.length})</option>
+              <option value="featured">
+                ★ Mais Vendidos / Destaque ({products.filter((p) => p.featured).length})
               </option>
-            ))}
-          </select>
+            </select>
+          </div>
         </div>
 
-        {/* Stock filter */}
-        <div>
-          <select
-            value={filterStock}
-            onChange={(e) => setFilterStock(e.target.value as any)}
-            className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 outline-hidden bg-white"
-          >
-            <option value="all">Todos os status de estoque</option>
-            <option value="low">Estoque Baixo (&lt; mínimo)</option>
-            <option value="out">Esgotado (0 potes)</option>
-          </select>
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 text-[11px] text-slate-500">
+          <span>
+            Clique em qualquer produto na tabela para abrir o pop-up de edição (nome, valores, foto e detalhes).
+          </span>
+          <span className="font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-lg inline-flex items-center gap-1">
+            <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
+            {products.filter((p) => p.featured).length} produtos em destaque (Mais Vendidos)
+          </span>
         </div>
       </div>
 
@@ -381,6 +413,7 @@ export const AdminProductsPage: React.FC<AdminProductsPageProps> = ({ onNavigate
                 <th className="py-3 px-4">Preço Caixa (Atacado)</th>
                 <th className="py-3 px-4">Embalagem</th>
                 <th className="py-3 px-4">Estoque</th>
+                <th className="py-3 px-4 text-center">Mais Vendido</th>
                 <th className="py-3 px-4 text-center">Status</th>
                 <th className="py-3 px-4 text-right">Ações</th>
               </tr>
@@ -388,17 +421,22 @@ export const AdminProductsPage: React.FC<AdminProductsPageProps> = ({ onNavigate
             <tbody className="divide-y divide-slate-100">
               {filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-slate-400">
+                  <td colSpan={9} className="py-12 text-center text-slate-400">
                     Nenhum doce encontrado com os filtros aplicados.
                   </td>
                 </tr>
               ) : (
                 filteredProducts.map((p) => (
-                  <tr key={p.id} className="hover:bg-slate-50/70 transition-colors">
+                  <tr
+                    key={p.id}
+                    onClick={() => handleOpenEditModal(p)}
+                    title="Clique para editar este produto"
+                    className="hover:bg-blue-50/40 transition-colors cursor-pointer group"
+                  >
                     {/* Imagem + Nome */}
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 p-1 flex items-center justify-center shrink-0 overflow-hidden">
+                        <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 p-1 flex items-center justify-center shrink-0 overflow-hidden group-hover:border-blue-300 transition-colors">
                           <img
                             src={p.image_url}
                             alt={p.name}
@@ -406,7 +444,7 @@ export const AdminProductsPage: React.FC<AdminProductsPageProps> = ({ onNavigate
                           />
                         </div>
                         <div>
-                          <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                          <div className="font-bold text-slate-900 group-hover:text-blue-950 flex items-center gap-1.5">
                             {p.name}
                             {p.featured && (
                               <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
@@ -443,22 +481,55 @@ export const AdminProductsPage: React.FC<AdminProductsPageProps> = ({ onNavigate
                     </td>
 
                     {/* Estoque */}
-                    <td className="py-3 px-4">
+                    <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-2">
                         <input
                           type="number"
                           value={p.stock}
                           min={0}
                           onChange={(e) => updateProductStock(p.id, parseInt(e.target.value) || 0)}
-                          className="w-16 px-2 py-1 rounded-lg border border-slate-300 text-center font-bold text-slate-900 text-xs focus:ring-2 focus:ring-blue-500"
+                          className="w-16 px-2 py-1 rounded-lg border border-slate-300 text-center font-bold text-slate-900 text-xs focus:ring-2 focus:ring-blue-500 bg-white"
                         />
                         <StockBadge stock={p.stock} minStock={p.minimum_stock} />
                       </div>
                     </td>
 
-                    {/* Status Ativo */}
-                    <td className="py-3 px-4 text-center">
+                    {/* Mais Vendido / Destaque */}
+                    <td className="py-3 px-4 text-center" onClick={(e) => e.stopPropagation()}>
                       <button
+                        type="button"
+                        onClick={() => {
+                          toggleProductFeatured(p.id);
+                          showToast(
+                            !p.featured
+                              ? `"${p.name}" marcado como Mais Vendido (Destaque)!`
+                              : `"${p.name}" removido dos Mais Vendidos.`
+                          );
+                        }}
+                        title={
+                          p.featured
+                            ? 'Clique para remover dos Mais Vendidos'
+                            : 'Clique para destacar nos Mais Vendidos'
+                        }
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold cursor-pointer transition-colors ${
+                          p.featured
+                            ? 'bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200'
+                            : 'bg-slate-100 text-slate-500 border border-slate-200 hover:bg-slate-200 hover:text-slate-800'
+                        }`}
+                      >
+                        <Star
+                          className={`w-3 h-3 ${
+                            p.featured ? 'text-amber-600 fill-amber-500' : 'text-slate-400'
+                          }`}
+                        />
+                        <span>{p.featured ? 'Mais Vendido' : 'Destacar'}</span>
+                      </button>
+                    </td>
+
+                    {/* Status Ativo */}
+                    <td className="py-3 px-4 text-center" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        type="button"
                         onClick={() => toggleProductActive(p.id)}
                         className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold cursor-pointer transition-colors ${
                           p.active
@@ -472,26 +543,29 @@ export const AdminProductsPage: React.FC<AdminProductsPageProps> = ({ onNavigate
                     </td>
 
                     {/* Ações */}
-                    <td className="py-3 px-4 text-right">
+                    <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1">
                         <button
+                          type="button"
                           title="Duplicar Doce"
                           onClick={() => handleDuplicate(p)}
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-blue-900 hover:bg-blue-50 transition-colors"
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-blue-900 hover:bg-blue-50 transition-colors cursor-pointer"
                         >
                           <Copy className="w-4 h-4" />
                         </button>
                         <button
+                          type="button"
                           title="Editar Doce"
                           onClick={() => handleOpenEditModal(p)}
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 transition-colors"
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 transition-colors cursor-pointer"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
+                          type="button"
                           title="Excluir Doce"
                           onClick={() => handleDelete(p.id, p.name)}
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-rose-700 hover:bg-rose-50 transition-colors"
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-rose-700 hover:bg-rose-50 transition-colors cursor-pointer"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -507,7 +581,12 @@ export const AdminProductsPage: React.FC<AdminProductsPageProps> = ({ onNavigate
 
       {/* Modal Add / Edit Product */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsModalOpen(false);
+          }}
+          className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto"
+        >
           <div className="bg-white rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
               <div>
@@ -885,7 +964,7 @@ export const AdminProductsPage: React.FC<AdminProductsPageProps> = ({ onNavigate
                       className="rounded text-blue-900 focus:ring-blue-500"
                     />
                     <span className="font-semibold text-slate-800">
-                      Destacar na Página Inicial
+                      Mais Vendido (Destacar na Página Inicial)
                     </span>
                   </label>
                 </div>
